@@ -1,0 +1,15 @@
+**/node_modules
+**/dist
+**/coverage
+.git
+.github
+.env
+.env.*
+data
+uploads
+e2e
+**/*.db
+**/test-results
+**/playwright-report
+*.md
+!apps/**/README.md

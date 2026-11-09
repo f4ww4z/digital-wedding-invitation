@@ -1,0 +1,39 @@
+{
+  "name": "sakinah-digital-invitation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-source, self-hosted, animated semi-3D digital wedding invitation with RSVP, wishes, gift tracking and an admin dashboard.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.23.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c magenta,cyan \"pnpm --filter @sakinah/api dev\" \"pnpm --filter @sakinah/web dev\"",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @sakinah/e2e test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.0",
+    "concurrently": "^10.0.7",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "^8.72.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "argon2",
+      "sharp",
+      "esbuild"
+    ]
+  }
+}
