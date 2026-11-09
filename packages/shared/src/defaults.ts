@@ -12,12 +12,12 @@ export const defaultContent: InvitationContent = {
   },
   theme: {
     preset: 'garden',
-    primary: '#b76e79',
-    accent: '#7d9a86',
-    background: '#fbf6f2',
+    primary: '#c7848f',
+    accent: '#7a9883',
+    background: '#f3f5ef',
     surface: '#ffffff',
-    text: '#4a3a3f',
-    muted: '#8c7b80',
+    text: '#3d3345',
+    muted: '#8d8395',
   },
   defaultLocale: 'id',
   cover: {

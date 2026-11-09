@@ -1,0 +1,160 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/cormorant-garamond/wght.css';
+@import '@fontsource-variable/cormorant-garamond/wght-italic.css';
+@import '@fontsource-variable/jost/wght.css';
+@import '@fontsource/amiri/arabic-400.css';
+
+/* Theme tokens. Runtime values come from admin-edited content (see applyTheme). */
+:root {
+  --c-bg: #f3f5ef;
+  --c-surface: #ffffff;
+  --c-primary: #c7848f;
+  --c-accent: #7a9883;
+  --c-text: #3d3345;
+  --c-muted: #8d8395;
+  --c-primary-soft: color-mix(in oklab, var(--c-primary) 18%, var(--c-bg));
+  --c-accent-soft: color-mix(in oklab, var(--c-accent) 16%, var(--c-bg));
+  --c-line: color-mix(in oklab, var(--c-text) 14%, transparent);
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-primary: var(--c-primary);
+  --color-primary-soft: var(--c-primary-soft);
+  --color-accent: var(--c-accent);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-ink: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --font-display: 'Cormorant Garamond Variable', 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Jost Variable', 'Jost', system-ui, sans-serif;
+  --font-arabic: 'Amiri', 'Scheherazade New', serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body.scroll-locked {
+  overflow: hidden;
+  height: 100dvh;
+  touch-action: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: var(--c-primary-soft);
+}
+
+/* Display type */
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+.display-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 300;
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+
+/* Frosted surface used for cards that sit over the garden layers. */
+.glass {
+  background: color-mix(in oklab, var(--c-surface) 72%, transparent);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  border: 1px solid color-mix(in oklab, var(--c-surface) 80%, transparent);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 18px 40px -24px color-mix(in oklab, var(--c-text) 45%, transparent);
+}
+
+/* Arch-topped frame: the garden-arch silhouette used for portraits & event cards. */
+.arch {
+  border-radius: 999px 999px 28px 28px;
+}
+
+.field {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--c-line);
+  background: color-mix(in oklab, var(--c-surface) 85%, transparent);
+  padding: 0.8rem 1rem;
+  font: inherit;
+  color: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field:focus {
+  outline: none;
+  border-color: var(--c-primary);
+  box-shadow: 0 0 0 3px var(--c-primary-soft);
+}
+.field::placeholder {
+  color: var(--c-muted);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.8rem 1.4rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: transform 0.15s, background-color 0.2s, opacity 0.2s;
+  cursor: pointer;
+}
+.btn:active {
+  transform: scale(0.97);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--c-primary);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--c-primary) 88%, black);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--c-text);
+  border: 1px solid var(--c-line);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--c-primary-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

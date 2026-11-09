@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { contentSchema, defaultContent, type InvitationContent } from '@sakinah/shared';
 import type { Logger } from 'pino';
 import type { Db } from '../db/index.js';
-import { settings } from '../db/schema.js';
+import { settings, wishlistItems } from '../db/schema.js';
 
 const KEY = 'content';
 
@@ -42,7 +42,15 @@ export class ContentService {
         .insert(settings)
         .values({ key: KEY, value: JSON.stringify(defaultContent) })
         .run();
-      this.log.info('Seeded default invitation content');
+      this.db
+        .insert(wishlistItems)
+        .values([
+          { name: 'Rice cooker', description: 'Digital, 1.8 L', qty: 1, sort: 1 },
+          { name: 'Set sprei katun', description: 'Ukuran 180×200, warna netral', qty: 2, sort: 2 },
+          { name: 'Tanaman hias', description: 'Untuk rumah baru kami 🌿', qty: 3, sort: 3 },
+        ])
+        .run();
+      this.log.info('Seeded default invitation content and demo wishlist');
     }
   }
 

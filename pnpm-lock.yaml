@@ -123,9 +123,6 @@ importers:
       '@fontsource/amiri':
         specifier: ^5.3.0
         version: 5.3.0
-      '@fontsource/great-vibes':
-        specifier: ^5.3.0
-        version: 5.3.0
       '@react-three/drei':
         specifier: ^10.7.9
         version: 10.7.9(@react-three/fiber@9.8.2(@types/react@19.3.0)(immer@11.2.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0))(@types/react@19.3.0)(@types/three@0.187.0)(immer@11.2.9)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(three@0.187.0)
@@ -507,9 +504,6 @@ packages:
 
   '@fontsource/amiri@5.3.0':
     resolution: {integrity: sha512-i4SWJnVIphj8556EdVzNrEG/Qu82k6JXjXTtSUIohx3tHmo2GHw1Kv60TWo+xjk7Yf1Etb2Gskh0lUFclTKyUw==}
-
-  '@fontsource/great-vibes@5.3.0':
-    resolution: {integrity: sha512-1w60cXzXnC9V4y943po8044O1mqRQBiTTK75h7OpZE+1VQtx+KlAAzoIyEE5KNzu05gUpxaCQg7cbL7ITSwegQ==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -3370,8 +3364,6 @@ snapshots:
   '@fontsource-variable/jost@5.3.0': {}
 
   '@fontsource/amiri@5.3.0': {}
-
-  '@fontsource/great-vibes@5.3.0': {}
 
   '@humanfs/core@0.19.2':
     dependencies:
