@@ -78,7 +78,7 @@ function EventCard({ e, c, index }: { e: WeddingEvent; c: InvitationContent; ind
               src={`https://www.google.com/maps?q=${encodeURIComponent(e.mapsEmbedQuery)}&output=embed`}
               className="h-[220px] w-full border-0"
               loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
+              referrerPolicy="no-referrer"
               sandbox="allow-scripts allow-same-origin allow-popups"
             />
           </motion.div>

@@ -29,11 +29,12 @@ import type { createLimiters } from '../middleware/rateLimit.js';
 
 interface Deps {
   db: Db;
+  publicUrl: string;
   content: ContentService;
   limiters: ReturnType<typeof createLimiters>;
 }
 
-export function publicRouter({ db, content, limiters }: Deps): Router {
+export function publicRouter({ db, publicUrl, content, limiters }: Deps): Router {
   const r = Router();
   const body = express.json({ limit: '16kb' });
 
@@ -48,6 +49,40 @@ export function publicRouter({ db, content, limiters }: Deps): Router {
     const { content: c, updatedAt } = content.get();
     res.setHeader('Cache-Control', 'no-cache');
     res.json({ content: c, updatedAt });
+  });
+
+  /**
+   * HTML <head> tags for link previews (WhatsApp, Telegram, Facebook don't run JS).
+   * nginx splices this into index.html with an SSI include.
+   */
+  r.get('/meta', (_req, res) => {
+    const c = content.get().content;
+    const base = publicUrl.replace(/\/$/, '');
+    const abs = (u: string) => (u.startsWith('/') ? `${base}${u}` : u);
+    const esc = (v: string) =>
+      v.replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]!);
+    const tags = [
+      `<title>${esc(c.meta.title)}</title>`,
+      `<meta name="description" content="${esc(c.meta.description)}" />`,
+      `<meta property="og:type" content="website" />`,
+      `<meta property="og:title" content="${esc(c.meta.title)}" />`,
+      `<meta property="og:description" content="${esc(c.meta.description)}" />`,
+      `<meta property="og:url" content="${esc(base)}/" />`,
+      ...(c.meta.ogImage ? [`<meta property="og:image" content="${esc(abs(c.meta.ogImage))}" />`] : []),
+      `<meta name="twitter:card" content="summary_large_image" />`,
+      // Guest names live in URLs; keep invitations out of search results unless allowed.
+      ...(c.meta.allowIndexing ? [] : [`<meta name="robots" content="noindex, nofollow" />`]),
+      `<meta name="theme-color" content="${esc(c.theme.background)}" />`,
+    ];
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.send(tags.join('\n    '));
+  });
+
+  r.get('/robots.txt', (_req, res) => {
+    const allow = content.get().content.meta.allowIndexing;
+    res.type('text/plain').setHeader('Cache-Control', 'no-cache');
+    res.send(`User-agent: *\n${allow ? 'Allow: /\nDisallow: /admin\nDisallow: /api/' : 'Disallow: /'}\n`);
   });
 
   r.get('/guest/:code', limiters.publicRead, (req, res) => {
@@ -65,7 +100,7 @@ export function publicRouter({ db, content, limiters }: Deps): Router {
   });
 
   /** Called when the cover is opened. Tracks opens for stats. */
-  r.post('/open', limiters.publicWrite, body, (req, res) => {
+  r.post('/open', limiters.open, body, (req, res) => {
     const { guestCode } = parse(z.object({ guestCode: guestCodeSchema.optional() }), req.body ?? {});
     const g = findGuest(guestCode);
     const nowIso = new Date().toISOString();
@@ -98,7 +133,7 @@ export function publicRouter({ db, content, limiters }: Deps): Router {
     res.json(row ? { attendance: row.attendance, pax: row.pax, message: row.message, name: row.name } : null);
   });
 
-  r.post('/rsvp', limiters.publicWrite, body, (req, res) => {
+  r.post('/rsvp', limiters.publicWrite, limiters.create, body, (req, res) => {
     const c = content.get().content;
     feature(c.rsvp.enabled);
     if (c.rsvp.deadline && Date.now() > Date.parse(c.rsvp.deadline)) {
@@ -179,19 +214,29 @@ export function publicRouter({ db, content, limiters }: Deps): Router {
     res.json(page);
   });
 
-  r.post('/wishes', limiters.publicWrite, body, (req, res) => {
+  r.post('/wishes', limiters.publicWrite, limiters.create, body, (req, res) => {
     const c = content.get().content;
     feature(c.wishes.enabled);
     const input = parse(wishInput, req.body);
     const g = findGuest(input.guestCode);
     const status = c.wishes.requireApproval ? 'pending' : 'visible';
+    // Attendance badge comes from the sender's real RSVP, not from the request.
+    const rsvp = g
+      ? db.select({ a: rsvps.attendance }).from(rsvps).where(eq(rsvps.guestId, g.id)).get()
+      : input.clientToken
+        ? db
+            .select({ a: rsvps.attendance })
+            .from(rsvps)
+            .where(and(eq(rsvps.clientToken, input.clientToken), isNull(rsvps.guestId)))
+            .get()
+        : undefined;
     const row = db
       .insert(wishes)
       .values({
         guestId: g?.id ?? null,
         name: input.name,
         message: input.message,
-        attendance: input.attendance ?? null,
+        attendance: rsvp?.a ?? null,
         status,
       })
       .returning()
@@ -208,7 +253,7 @@ export function publicRouter({ db, content, limiters }: Deps): Router {
 
   /* ---------------- Gifts ---------------- */
 
-  r.post('/gifts/confirm', limiters.publicWrite, body, (req, res) => {
+  r.post('/gifts/confirm', limiters.publicWrite, limiters.create, body, (req, res) => {
     const c = content.get().content;
     feature(c.gift.enabled && c.gift.confirmationEnabled);
     const input = parse(giftConfirmInput, req.body);
@@ -253,7 +298,7 @@ export function publicRouter({ db, content, limiters }: Deps): Router {
     res.json(out);
   });
 
-  r.post('/wishlist/:id/claim', limiters.publicWrite, body, (req, res) => {
+  r.post('/wishlist/:id/claim', limiters.publicWrite, limiters.create, body, (req, res) => {
     const c = content.get().content;
     feature(c.gift.enabled && c.gift.wishlistEnabled);
     const id = idParam(req);

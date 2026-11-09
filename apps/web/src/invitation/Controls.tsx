@@ -67,7 +67,7 @@ export function Controls({ music }: { music: ReturnType<typeof useMusic> }) {
         <button
           type="button"
           onClick={music.toggle}
-          className="glass relative flex h-12 w-12 items-center justify-center rounded-full text-primary"
+          className="glass relative flex h-12 w-12 items-center justify-center rounded-full text-primary-strong"
           aria-label={music.playing ? t('pauseMusic') : t('openingMusic')}
           aria-pressed={music.playing}
         >

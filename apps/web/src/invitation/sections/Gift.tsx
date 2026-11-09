@@ -68,7 +68,7 @@ function ConfirmForm({ guestCode, defaultName }: { guestCode: string | null; def
             name={t('giftMethod')}
             value={method}
             onChange={setMethod}
-            options={(['transfer', 'ewallet', 'physical'] as const).map((v) => ({ value: v, label: t(`method_${v}`) }))}
+            options={(['transfer', 'ewallet', 'physical', 'other'] as const).map((v) => ({ value: v, label: t(`method_${v}`) }))}
           />
         </div>
       </div>
@@ -137,7 +137,7 @@ function Wishlist({ guestCode, defaultName }: { guestCode: string | null; defaul
           const full = it.claimed >= it.qty;
           return (
             <li key={it.id} className={`glass flex gap-4 rounded-2xl p-3 ${full && !it.mine ? 'opacity-60' : ''}`}>
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft text-primary">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary-soft text-primary-strong">
                 {it.imageUrl ? <img src={it.imageUrl} alt="" className="h-full w-full object-cover" loading="lazy" /> : <GiftIcon aria-hidden />}
               </div>
               <div className="min-w-0 flex-1">
@@ -157,7 +157,7 @@ function Wishlist({ guestCode, defaultName }: { guestCode: string | null; defaul
                     {it.claimed}/{it.qty}
                   </span>
                   {it.link && (
-                    <a href={it.link} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline">
+                    <a href={it.link} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1 text-xs text-primary-strong underline-offset-2 hover:underline">
                       {t('viewItem')} <ExternalLink size={12} aria-hidden />
                     </a>
                   )}
@@ -212,7 +212,7 @@ export function Gift({ c, guestCode, guestName }: { c: InvitationContent; guestC
           <Reveal key={i} delay={i * 0.08}>
             <motion.div
               className="relative overflow-hidden rounded-[1.6rem] p-6 text-white shadow-[0_24px_50px_-28px_rgb(61_51_69/0.7)]"
-              style={{ background: `linear-gradient(135deg, var(--c-primary), color-mix(in oklab, var(--c-primary) 55%, var(--c-accent)))` }}
+              style={{ background: `linear-gradient(135deg, var(--c-primary-strong), color-mix(in oklab, var(--c-primary-strong) 70%, var(--c-accent)))` }}
               whileHover={{ rotateY: 6, rotateX: -4 }}
               transition={{ type: 'spring', stiffness: 200, damping: 18 }}
             >

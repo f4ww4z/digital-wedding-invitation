@@ -159,7 +159,7 @@ export default function Gifts() {
                       <p className="text-xs text-muted">
                         {it.claims.length}/{it.qty} picked
                         {it.link && (
-                          <a href={it.link} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center gap-1 text-primary">
+                          <a href={it.link} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center gap-1 text-primary-strong">
                             link <ExternalLink size={11} aria-hidden />
                           </a>
                         )}

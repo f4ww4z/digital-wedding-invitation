@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { etiquetteIcons } from './util.js';
 
 /** Max lengths keep stored content and rendered pages bounded. */
 const short = (max = 120) => z.string().trim().max(max);
@@ -13,8 +14,12 @@ export const safeUrl = z
   .trim()
   .max(2048)
   .refine(
-    (v) => v === '' || (/^\/(?!\/)/.test(v) && !v.includes('\\')) || /^https?:\/\//i.test(v),
-    { message: 'Must be empty, a site path starting with "/", or an http(s) URL' },
+    (v) =>
+      v === '' ||
+      // No whitespace/control chars anywhere: browsers strip tabs/newlines, turning "/\t/x" into "//x".
+      // eslint-disable-next-line no-control-regex -- intentionally rejecting control chars
+      (!/[\s\u0000-\u001f\u007f]/.test(v) && ((/^\/(?!\/)/.test(v) && !v.includes('\\')) || /^https?:\/\/[^/]/i.test(v))),
+    { message: 'Must be empty, a site path starting with "/", or an http(s) URL (no spaces)' },
   );
 
 export const localeSchema = z.enum(['id', 'en']);
@@ -65,18 +70,7 @@ export const storyItemSchema = z.object({
 
 export const galleryImageSchema = z.object({ src: safeUrl, alt: short(160) });
 
-export const etiquetteIcons = [
-  'mask',
-  'clock',
-  'dress',
-  'phone',
-  'camera',
-  'gift',
-  'hands',
-  'utensils',
-  'pray',
-  'users',
-] as const;
+export { etiquetteIcons };
 export const etiquetteItemSchema = z.object({ icon: z.enum(etiquetteIcons), text: lText(160) });
 
 export const giftAccountSchema = z.object({
@@ -103,6 +97,8 @@ export const contentSchema = z.object({
     title: short(120),
     description: short(300),
     ogImage: safeUrl,
+    /** Off by default: guest names appear in invitation URLs. */
+    allowIndexing: z.boolean(),
   }),
   theme: themeSchema,
   defaultLocale: localeSchema,
@@ -161,30 +157,4 @@ export const contentSchema = z.object({
 
 export type InvitationContent = z.infer<typeof contentSchema>;
 
-/** Earliest event start as an absolute Date, used for countdown. */
-export function weddingStart(content: Pick<InvitationContent, 'events'>): Date {
-  const starts = content.events.map((e) => eventStart(e).getTime());
-  return new Date(Math.min(...starts));
-}
-
-export function eventStart(e: Pick<WeddingEvent, 'date' | 'startTime' | 'utcOffsetMinutes'>): Date {
-  return toUtc(e.date, e.startTime, e.utcOffsetMinutes);
-}
-
-export function eventEnd(
-  e: Pick<WeddingEvent, 'date' | 'startTime' | 'endTime' | 'utcOffsetMinutes'>,
-): Date {
-  if (e.endTime) return toUtc(e.date, e.endTime, e.utcOffsetMinutes);
-  return new Date(eventStart(e).getTime() + 2 * 60 * 60 * 1000);
-}
-
-function toUtc(date: string, time: string, offsetMinutes: number): Date {
-  const [y, m, d] = date.split('-').map(Number) as [number, number, number];
-  const [hh, mm] = time.split(':').map(Number) as [number, number];
-  return new Date(Date.UTC(y, m - 1, d, hh, mm) - offsetMinutes * 60 * 1000);
-}
-
-/** Fill `{name}`/`{link}` placeholders in a share template. */
-export function fillTemplate(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{(\w+)\}/g, (m, k: string) => vars[k] ?? m);
-}
+export { weddingStart, eventStart, eventEnd, fillTemplate } from './util.js';

@@ -7,7 +7,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { defaultContent, type InvitationContent } from '@sakinah/shared';
 import { createApp, type App } from './app.js';
-import { loadConfig } from './config.js';
+import { loadConfig, PLACEHOLDERS } from './config.js';
 import { openDb } from './db/index.js';
 import { csvCell } from './http.js';
 
@@ -30,6 +30,7 @@ const config = loadConfig({
 });
 
 const token = (n: number) => `tok_${String(n).padStart(16, '0')}`;
+const latest = async (): Promise<string> => (await agent.get('/api/admin/content')).body.updatedAt;
 
 beforeAll(async () => {
   const db = openDb(':memory:');
@@ -48,6 +49,20 @@ describe('health & content', () => {
     expect(res.body.content.couple.bride.nickname).toBe(defaultContent.couple.bride.nickname);
     expect(res.headers['content-security-policy']).toContain("default-src 'none'");
     expect(res.headers['x-powered-by']).toBeUndefined();
+  });
+
+  it('renders escaped link-preview meta tags with absolute image URLs', async () => {
+    const res = await request(ctx.app).get('/api/meta').expect(200);
+    expect(res.headers['content-type']).toContain('text/html');
+    expect(res.text).toContain('<meta property="og:title" content="The Wedding of Alya &amp; Rayhan" />');
+    expect(res.text).toContain('content="http://localhost:8080/demo/og.jpg"');
+  });
+
+  it('keeps the invitation out of search engines by default', async () => {
+    const meta = await request(ctx.app).get('/api/meta').expect(200);
+    expect(meta.text).toContain('noindex');
+    const robots = await request(ctx.app).get('/api/robots.txt').expect(200);
+    expect(robots.text).toContain('Disallow: /\n');
   });
 
   it('404s unknown API routes as JSON', async () => {
@@ -94,7 +109,7 @@ describe('content editing', () => {
 
     const bad = structuredClone(next) as unknown as { music: { src: string } };
     bad.music.src = 'javascript:alert(1)';
-    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: bad }).expect(400);
+    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: bad, updatedAt: body.updatedAt }).expect(400);
 
     const saved = await agent
       .put('/api/admin/content')
@@ -102,6 +117,9 @@ describe('content editing', () => {
       .send({ content: next, updatedAt: body.updatedAt })
       .expect(200);
     expect(saved.body.updatedAt).not.toBe(body.updatedAt);
+
+    // missing updatedAt → rejected (no silent overwrite)
+    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: next }).expect(400);
 
     // stale updatedAt → conflict
     await agent
@@ -187,13 +205,13 @@ describe('guests & RSVP', () => {
     const { body } = await agent.get('/api/admin/content');
     const c: InvitationContent = structuredClone(body.content);
     c.rsvp.deadline = '2020-01-01T00:00:00.000Z';
-    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: c }).expect(200);
+    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: c, updatedAt: await latest() }).expect(200);
     await request(ctx.app)
       .post('/api/rsvp')
       .send({ name: 'Late', attendance: 'yes', pax: 1, clientToken: token(4) })
       .expect(403);
     c.rsvp.deadline = '';
-    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: c }).expect(200);
+    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: c, updatedAt: await latest() }).expect(200);
   });
 
   it('exports guests CSV with links and deletes guest cascading RSVP', async () => {
@@ -228,6 +246,17 @@ describe('wishes', () => {
     expect(res.headers['content-type']).toContain('application/json');
   });
 
+  it('derives the attendance badge from the sender\'s RSVP, ignoring client claims', async () => {
+    await request(ctx.app).post('/api/rsvp').send({ name: 'Badge', attendance: 'maybe', pax: 1, clientToken: token(20) }).expect(201);
+    const w = await request(ctx.app)
+      .post('/api/wishes')
+      .send({ name: 'Badge', message: 'hi', clientToken: token(20), attendance: 'yes' })
+      .expect(201);
+    expect(w.body.wish.attendance).toBe('maybe');
+    const anon = await request(ctx.app).post('/api/wishes').send({ name: 'Anon', message: 'hi' }).expect(201);
+    expect(anon.body.wish.attendance).toBeNull();
+  });
+
   it('drops honeypot submissions', async () => {
     await request(ctx.app).post('/api/wishes').send({ name: 'bot', message: 'buy', website: 'x' }).expect(400);
   });
@@ -236,7 +265,7 @@ describe('wishes', () => {
     const { body } = await agent.get('/api/admin/content');
     const c: InvitationContent = structuredClone(body.content);
     c.wishes.requireApproval = true;
-    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: c }).expect(200);
+    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: c, updatedAt: await latest() }).expect(200);
     const res = await request(ctx.app).post('/api/wishes').send({ name: 'Mod', message: 'pending one' }).expect(201);
     expect(res.body.status).toBe('pending');
     const pub = await request(ctx.app).get('/api/wishes?limit=50').expect(200);
@@ -291,10 +320,10 @@ describe('gifts & wishlist', () => {
     const { body } = await agent.get('/api/admin/content');
     const c: InvitationContent = structuredClone(body.content);
     c.gift.wishlistEnabled = false;
-    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: c }).expect(200);
+    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: c, updatedAt: await latest() }).expect(200);
     await request(ctx.app).get('/api/wishlist').expect(403);
     c.gift.wishlistEnabled = true;
-    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: c }).expect(200);
+    await agent.put('/api/admin/content').set('x-csrf-token', csrf).send({ content: c, updatedAt: await latest() }).expect(200);
   });
 });
 
@@ -378,7 +407,68 @@ describe('password change & logout', () => {
 describe('csv', () => {
   it('neutralises spreadsheet formulas', () => {
     expect(csvCell('=HYPERLINK("x")')).toBe(`"'=HYPERLINK(""x"")"`);
-    expect(csvCell('+1')).toBe("'+1");
+    expect(csvCell('+62 812-3456-7890')).toBe('+62 812-3456-7890');
+    expect(csvCell('-1+HYPERLINK("x")')).toBe(`"'-1+HYPERLINK(""x"")"`);
+    expect(csvCell('@SUM(A1)')).toBe("'@SUM(A1)");
     expect(csvCell('normal')).toBe('normal');
+  });
+});
+
+describe('hardening', () => {
+  it('locks the admin account after repeated failures, persistently', async () => {
+    const db = openDb(':memory:');
+    const app2 = createApp({ config, db, log: pino({ level: 'silent' }) });
+    app2.content.ensureSeeded();
+    await app2.auth.bootstrapAdmin();
+    for (let i = 0; i < 10; i++) {
+      await request(app2.app).post('/api/admin/auth/login').send({ username: 'admin', password: `nope-${i}` }).expect(401);
+    }
+    const locked = await request(app2.app).post('/api/admin/auth/login').send({ username: 'admin', password: PASSWORD }).expect(429);
+    expect(locked.body.error).toMatch(/Try again in/);
+    // A new app instance on the same DB (i.e. a restart) is still locked.
+    const app3 = createApp({ config, db, log: pino({ level: 'silent' }) });
+    await request(app3.app).post('/api/admin/auth/login').send({ username: 'admin', password: PASSWORD }).expect(429);
+    // After the lock expires, the right password works and resets the counter.
+    db.$client.prepare("UPDATE login_throttle SET locked_until = '2000-01-01T00:00:00.000Z'").run();
+    await request(app3.app).post('/api/admin/auth/login').send({ username: 'admin', password: PASSWORD }).expect(200);
+    expect(db.$client.prepare('SELECT count(*) n FROM login_throttle').get()).toEqual({ n: 0 });
+  });
+
+  it('never stores a fast hash of the .env password', async () => {
+    const db = openDb(':memory:');
+    const app2 = createApp({ config, db, log: pino({ level: 'silent' }) });
+    await app2.auth.bootstrapAdmin();
+    const row = db.$client.prepare('SELECT env_fingerprint f FROM admin').get() as { f: string };
+    expect(row.f.startsWith('$argon2id$')).toBe(true);
+    // Re-running bootstrap with the same env keeps the row untouched.
+    await app2.auth.bootstrapAdmin();
+    expect((db.$client.prepare('SELECT env_fingerprint f FROM admin').get() as { f: string }).f).toBe(row.f);
+  });
+
+  it('repairs invalid stored content field-by-field instead of serving demo content', async () => {
+    const db = openDb(':memory:');
+    const app2 = createApp({ config, db, log: pino({ level: 'silent' }) });
+    const stored = structuredClone(defaultContent) as InvitationContent;
+    stored.couple.bride.nickname = 'Real Bride';
+    (stored.music as { src: string }).src = 'javascript:alert(1)'; // e.g. allowed by an older version
+    db.$client.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('content', JSON.stringify(stored));
+    const res = await request(app2.app).get('/api/content').expect(200);
+    expect(res.body.content.couple.bride.nickname).toBe('Real Bride');
+    expect(res.body.content.music.src).toBe(defaultContent.music.src);
+  });
+
+  it('resolves relative upload directories (sendFile needs absolute paths)', async () => {
+    const { MediaService } = await import('./services/media.js');
+    const rel = join('.', 'tmp-test-uploads');
+    const m = new MediaService(openDb(':memory:'), rel);
+    expect(m.dir.startsWith('/')).toBe(true);
+    rmSync(m.dir, { recursive: true, force: true });
+  });
+
+  it('refuses example secrets in production', () => {
+    const base = { NODE_ENV: 'production', ADMIN_PASSWORD: 'my-own-long-password' };
+    expect(() => loadConfig({ ...base, SESSION_SECRET: PLACEHOLDERS.SESSION_SECRET })).toThrow(/SESSION_SECRET/);
+    expect(() => loadConfig({ ...base, SESSION_SECRET: 'y'.repeat(40), ADMIN_PASSWORD: PLACEHOLDERS.ADMIN_PASSWORD })).toThrow(/ADMIN_PASSWORD/);
+    expect(() => loadConfig({ ...base, SESSION_SECRET: 'y'.repeat(40) })).not.toThrow();
   });
 });

@@ -13,6 +13,8 @@
   --c-text: #3d3345;
   --c-muted: #8d8395;
   --c-primary-soft: color-mix(in oklab, var(--c-primary) 18%, var(--c-bg));
+  /* Deepened primary for text and white-on-primary fills (WCAG AA ≥ 4.5:1 with the default palette). */
+  --c-primary-strong: color-mix(in oklab, var(--c-primary) 68%, #3d1f2b);
   --c-accent-soft: color-mix(in oklab, var(--c-accent) 16%, var(--c-bg));
   --c-line: color-mix(in oklab, var(--c-text) 14%, transparent);
   color-scheme: light;
@@ -23,6 +25,7 @@
   --color-surface: var(--c-surface);
   --color-primary: var(--c-primary);
   --color-primary-soft: var(--c-primary-soft);
+  --color-primary-strong: var(--c-primary-strong);
   --color-accent: var(--c-accent);
   --color-accent-soft: var(--c-accent-soft);
   --color-ink: var(--c-text);
@@ -133,11 +136,11 @@ body.scroll-locked {
   cursor: not-allowed;
 }
 .btn-primary {
-  background: var(--c-primary);
+  background: var(--c-primary-strong);
   color: #fff;
 }
 .btn-primary:hover:not(:disabled) {
-  background: color-mix(in oklab, var(--c-primary) 88%, black);
+  background: color-mix(in oklab, var(--c-primary-strong) 88%, black);
 }
 .btn-ghost {
   background: transparent;

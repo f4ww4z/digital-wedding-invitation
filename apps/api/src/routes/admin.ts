@@ -63,10 +63,17 @@ export function adminRouter({ db, config, auth, content, media, limiters }: Deps
 
   r.post('/auth/login', limiters.login, json, async (req, res) => {
     const { username, password } = parse(loginInput, req.body);
+    const locked = auth.lockedUntil();
+    if (locked) {
+      const mins = Math.max(1, Math.ceil((locked.getTime() - Date.now()) / 60_000));
+      throw new HttpError(429, `Too many failed sign-ins. Try again in ${mins} minute${mins > 1 ? 's' : ''}.`);
+    }
     if (!(await auth.verifyLogin(username, password))) {
+      auth.recordFailure();
       req.log.warn({ ip: req.ip }, 'Failed admin login');
       throw new HttpError(401, 'Invalid username or password');
     }
+    auth.recordSuccess();
     const s = auth.createSession();
     res.cookie(SESSION_COOKIE, s.token, sessionCookieOptions(config, s.expiresAt));
     req.log.info({ ip: req.ip }, 'Admin logged in');
@@ -439,11 +446,12 @@ export function adminRouter({ db, config, auth, content, media, limiters }: Deps
   /* ---------------- Content ---------------- */
 
   r.get('/content', (_req, res) => {
-    res.json(content.get());
+    const { content: c, updatedAt, repaired } = content.get();
+    res.json({ content: c, updatedAt, repaired });
   });
 
   r.put('/content', bigJson, (req, res) => {
-    const body = parse(z.object({ content: z.unknown(), updatedAt: z.string().optional() }), req.body);
+    const body = parse(z.object({ content: z.unknown(), updatedAt: z.string().min(1, 'updatedAt is required (reload the editor)') }), req.body);
     const next = parse(contentSchema, body.content);
     const result = content.put(next, body.updatedAt);
     if (!result.ok) {

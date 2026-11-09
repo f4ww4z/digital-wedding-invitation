@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { mkdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import * as schema from './schema.js';
 import { migrations } from './migrations.js';
 
@@ -12,7 +12,7 @@ export function openDb(dataDir: string): Db {
   let file = ':memory:';
   if (dataDir !== ':memory:') {
     mkdirSync(dataDir, { recursive: true });
-    file = join(dataDir, 'sakinah.db');
+    file = join(resolve(dataDir), 'sakinah.db');
   }
   const sqlite = new Database(file);
   sqlite.pragma('journal_mode = WAL');

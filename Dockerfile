@@ -1,8 +1,10 @@
 # syntax=docker/dockerfile:1.7
 # Multi-stage build for both services. Targets: `api`, `web`.
 
-ARG NODE_IMAGE=node:24-alpine
-ARG NGINX_IMAGE=nginxinc/nginx-unprivileged:1.29-alpine
+ARG NODE_IMAGE=node:24.22.2-alpine3.24
+# Must match the Alpine release NODE_IMAGE is built on (musl/libstdc++ ABI).
+ARG ALPINE_IMAGE=alpine:3.24.4
+ARG NGINX_IMAGE=nginxinc/nginx-unprivileged:1.29.8-alpine
 
 # ---------- deps: full workspace install (native modules compiled here) ----------
 FROM ${NODE_IMAGE} AS deps
@@ -27,19 +29,31 @@ RUN pnpm --filter @sakinah/api build \
  && pnpm --filter @sakinah/api deploy --prod --legacy /out/api \
  && cp -r apps/api/dist /out/api/dist
 
+# Prune what the runtime never loads: other-OS native prebuilds, glibc libvips
+# (we run on musl), bundled C sources, type declarations and docs.
+RUN cd /out/api/node_modules/.pnpm \
+ && ARCH="$(node -p process.arch)" \
+ && rm -rf @img+sharp-libvips-linux-"$ARCH"@* @img+sharp-linux-"$ARCH"@* @types+* \
+ && find . -type d \( -path '*/better-sqlite3/deps' -o -path '*/better-sqlite3/src' \) -prune -exec rm -rf {} + \
+ && find . -type d -name prebuilds -prune -exec sh -c 'for d in "$1"/*; do case "${d##*/}" in linux-"$2"|linux-"$2".*|linuxmusl-"$2"|linuxmusl-"$2".*) ;; *) rm -rf "$d" ;; esac; done' _ {} "$ARCH" \; \
+ && find . -type f \( -name '*.md' -o -name '*.d.ts' -o -name '*.d.cts' -o -name '*.d.mts' -o -name '*.map' \) -delete
+
+# ---------- node binary only (no npm/yarn/corepack in the runtime) ----------
+FROM ${NODE_IMAGE} AS node
+
 # ---------- api runtime ----------
-FROM ${NODE_IMAGE} AS api
+FROM ${ALPINE_IMAGE} AS api
 ENV NODE_ENV=production \
     API_PORT=3000 \
     DATA_DIR=/data \
-    UPLOAD_DIR=/uploads \
-    NPM_CONFIG_UPDATE_NOTIFIER=false
-WORKDIR /app
-# Remove package managers from the runtime image; they are not needed to run.
-RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
-           /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn* \
- && mkdir -p /data /uploads \
+    UPLOAD_DIR=/uploads
+RUN apk add --no-cache libstdc++ \
+ && addgroup -g 1000 node \
+ && adduser -u 1000 -G node -s /sbin/nologin -D -H node \
+ && mkdir -p /data /uploads /app \
  && chown node:node /data /uploads
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+WORKDIR /app
 COPY --from=build --chown=root:root /out/api/node_modules ./node_modules
 COPY --from=build --chown=root:root /out/api/dist ./dist
 COPY --from=build --chown=root:root /out/api/package.json ./package.json

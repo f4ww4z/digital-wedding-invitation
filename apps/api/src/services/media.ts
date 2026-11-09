@@ -1,7 +1,7 @@
 import { fileTypeFromBuffer } from 'file-type';
 import { mkdirSync } from 'node:fs';
 import { unlink, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { desc, eq } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
 import sharp from 'sharp';
@@ -49,11 +49,15 @@ const toItem = (r: typeof media.$inferSelect): MediaItem => ({
 });
 
 export class MediaService {
+  readonly dir: string;
+
   constructor(
     private readonly db: Db,
-    readonly dir: string,
+    dir: string,
   ) {
-    mkdirSync(dir, { recursive: true });
+    // res.sendFile requires an absolute path.
+    this.dir = resolve(dir);
+    mkdirSync(this.dir, { recursive: true });
   }
 
   list(): MediaItem[] {

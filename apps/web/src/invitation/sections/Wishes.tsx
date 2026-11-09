@@ -5,14 +5,14 @@ import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
 import type { InvitationContent, WishesPage } from '@sakinah/shared';
 import { api, errorMessage } from '../../lib/api';
-import { rememberName } from '../../lib/clientToken';
+import { clientToken, rememberName } from '../../lib/clientToken';
 import { useL } from '../../lib/i18n';
 import { relativeTime } from '../../lib/format';
 import { Section, SectionTitle } from '../motion';
 
 const BADGE: Record<string, string> = {
   yes: 'bg-accent-soft text-accent',
-  no: 'bg-primary-soft text-primary',
+  no: 'bg-primary-soft text-primary-strong',
   maybe: 'bg-line text-muted',
 };
 
@@ -32,7 +32,7 @@ export function Wishes({ guestCode, guestName }: { c: InvitationContent; guestCo
   const [hp, setHp] = useState('');
   const m = useMutation({
     mutationFn: () =>
-      api<{ status: string }>('/api/wishes', { method: 'POST', json: { guestCode: guestCode ?? undefined, name, message, website: hp } }),
+      api<{ status: string }>('/api/wishes', { method: 'POST', json: { guestCode: guestCode ?? undefined, name, message, clientToken: clientToken(), website: hp } }),
     onSuccess: (r) => {
       rememberName(name);
       setMessage('');
@@ -73,7 +73,7 @@ export function Wishes({ guestCode, guestName }: { c: InvitationContent; guestCo
               className="rounded-2xl border border-line bg-surface/70 p-4"
             >
               <div className="flex items-center gap-2">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-medium text-primary" aria-hidden>
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-soft text-sm font-medium text-primary-strong" aria-hidden>
                   {w.name.trim().charAt(0).toUpperCase()}
                 </span>
                 <span className="min-w-0 truncate font-medium">{w.name}</span>

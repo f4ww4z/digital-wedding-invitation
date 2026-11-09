@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#fbf6f2" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>Wedding Invitation</title>
-    <meta name="description" content="Digital wedding invitation" />
+    <!-- Link-preview tags are injected server-side by nginx (SSI → /api/meta) from the admin-edited content. -->
+    <!--# block name="meta_fallback" --><title>Wedding Invitation</title><!--# endblock -->
+    <!--# include virtual="/api/meta" stub="meta_fallback" -->
   </head>
   <body>
     <div id="root"></div>

@@ -43,6 +43,15 @@ export function createApp({ config, db, log }: AppDeps): App {
       logger: log,
       redact: ['req.headers.cookie', 'req.headers.authorization', 'req.headers["x-csrf-token"]', 'res.headers["set-cookie"]'],
       autoLogging: { ignore: (req) => req.url === '/api/health' || req.url?.startsWith('/media/') === true },
+      // Guest codes and browser tokens are capabilities; keep them out of logs.
+      serializers: {
+        req: (req: { method: string; url: string }) => ({
+          method: req.method,
+          url: req.url
+            .replace(/([?&](?:token|g)=)[^&]+/g, '$1[redacted]')
+            .replace(/^\/api\/guest\/[^/?]+/, '/api/guest/[redacted]'),
+        }),
+      },
       customLogLevel: (_req, res, err) => (err || res.statusCode >= 500 ? 'error' : res.statusCode >= 400 ? 'warn' : 'info'),
     }),
   );
@@ -65,7 +74,7 @@ export function createApp({ config, db, log }: AppDeps): App {
   });
 
   app.use('/api/admin', adminRouter({ db, config, auth, content, media, limiters }));
-  app.use('/api', publicRouter({ db, content, limiters }));
+  app.use('/api', publicRouter({ db, publicUrl: config.PUBLIC_URL, content, limiters }));
 
   // Uploaded media. Filenames are random and validated; never derived from user input.
   app.get('/media/:file', (req, res, next) => {

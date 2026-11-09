@@ -9,18 +9,6 @@ import { shortDate } from '../lib/format';
 import { Cover } from './Cover';
 import { Controls, useMusic } from './Controls';
 import { requestMotionPermission, TiltProvider } from './motion';
-import { Hero } from './sections/Hero';
-import { Opening } from './sections/Opening';
-import { Couple } from './sections/Couple';
-import { Countdown } from './sections/Countdown';
-import { Events } from './sections/Events';
-import { Story } from './sections/Story';
-import { Gallery } from './sections/Gallery';
-import { Etiquette, Livestream } from './sections/Extras';
-import { Gift } from './sections/Gift';
-import { Rsvp } from './sections/Rsvp';
-import { Wishes } from './sections/Wishes';
-import { Closing } from './sections/Closing';
 import { Bloom, CornerCluster } from './ornaments/Florals';
 
 /** Wide screens: the phone column floats over a soft, blurred garden. */
@@ -39,6 +27,9 @@ function DesktopBackdrop() {
 }
 
 const CoverScene = lazy(() => import('../three/CoverScene'));
+// Everything behind the cover is a separate chunk, prefetched while the cover is shown.
+const loadSections = () => import('./Sections');
+const Sections = lazy(loadSections);
 
 /** WebGL is worth it only on capable devices that haven't asked for less motion. */
 function canUse3D(): boolean {
@@ -67,6 +58,10 @@ export default function Invitation() {
   const music = useMusic(
     c ?? ({ music: { enabled: false, src: '', title: '' } } as unknown as Parameters<typeof useMusic>[0]),
   );
+
+  useEffect(() => {
+    void loadSections();
+  }, []);
 
   useEffect(() => {
     if (!c) return;
@@ -161,21 +156,9 @@ export default function Invitation() {
           </AnimatePresence>
 
           {opened && (
-            <main>
-              <Hero c={c} />
-              <Opening c={c} />
-              <Couple c={c} />
-              {c.countdown.enabled && <Countdown c={c} />}
-              <Events c={c} />
-              {c.story.enabled && c.story.items.length > 0 && <Story c={c} />}
-              {c.gallery.enabled && c.gallery.images.length > 0 && <Gallery c={c} />}
-              {c.livestream.enabled && <Livestream c={c} />}
-              {c.etiquette.enabled && c.etiquette.items.length > 0 && <Etiquette c={c} />}
-              {c.gift.enabled && <Gift c={c} guestCode={guestCode} guestName={guest.data?.name ?? toName ?? ''} />}
-              {c.rsvp.enabled && <Rsvp c={c} guestCode={guestCode} guest={guest.data ?? null} guestName={guest.data?.name ?? toName ?? ''} />}
-              {c.wishes.enabled && <Wishes c={c} guestCode={guestCode} guestName={guest.data?.name ?? toName ?? ''} />}
-              <Closing c={c} />
-            </main>
+            <Suspense fallback={<div className="min-h-svh" />}>
+              <Sections c={c} guestCode={guestCode} guest={guest.data ?? null} guestName={guest.data?.name ?? toName ?? ''} />
+            </Suspense>
           )}
           {opened && <Controls music={music} />}
         </div>

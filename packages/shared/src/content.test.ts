@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contentSchema, eventStart, fillTemplate, safeUrl, weddingStart } from './content.js';
+import { contentSchema, eventEnd, eventStart, fillTemplate, safeUrl, weddingStart } from './content.js';
 import { defaultContent } from './defaults.js';
 import { rsvpInput, wishInput } from './api.js';
 
@@ -9,7 +9,7 @@ describe('content schema', () => {
   });
 
   it('rejects dangerous URLs', () => {
-    for (const bad of ['javascript:alert(1)', 'data:text/html,x', '//evil.com/x', '/\\evil.com']) {
+    for (const bad of ['javascript:alert(1)', 'data:text/html,x', '//evil.com/x', '/\\evil.com', '/\t/evil.com', '/\n/evil.com', 'https:///evil', 'https://a b']) {
       expect(safeUrl.safeParse(bad).success).toBe(false);
     }
     for (const ok of ['', '/media/a.webp', 'https://maps.google.com/?q=x']) {
@@ -21,6 +21,11 @@ describe('content schema', () => {
     const d = eventStart({ date: '2027-05-22', startTime: '08:00', utcOffsetMinutes: 420 });
     expect(d.toISOString()).toBe('2027-05-22T01:00:00.000Z');
     expect(weddingStart(defaultContent).toISOString()).toBe('2027-05-22T01:00:00.000Z');
+  });
+
+  it('treats an end time before the start as past midnight', () => {
+    const e = { date: '2027-05-22', startTime: '19:00', endTime: '01:00', utcOffsetMinutes: 420 };
+    expect(eventEnd(e).toISOString()).toBe('2027-05-22T18:00:00.000Z');
   });
 
   it('fills templates and keeps unknown placeholders', () => {

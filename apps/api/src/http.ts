@@ -53,7 +53,9 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
 /** CSV cell escaping incl. formula-injection guard for spreadsheet apps. */
 export function csvCell(v: unknown): string {
   let s = v === null || v === undefined ? '' : String(v);
-  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+  // Plain numbers/phone numbers ("+62 812-3456") can't carry a formula; leave them intact.
+  const numeric = /^[+-]?\d[\d\s().-]*$/.test(s);
+  if (!numeric && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

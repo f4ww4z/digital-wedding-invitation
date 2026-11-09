@@ -79,7 +79,7 @@ export function SegmentedChoice<T extends string>({
   options: { value: T; label: string }[];
 }) {
   return (
-    <div role="radiogroup" aria-label={name} className="grid gap-2" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+    <div role="radiogroup" aria-label={name} className="grid gap-2" style={{ gridTemplateColumns: `repeat(${options.length > 3 ? 2 : options.length}, minmax(0, 1fr))` }}>
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -89,7 +89,7 @@ export function SegmentedChoice<T extends string>({
             role="radio"
             aria-checked={active}
             onClick={() => onChange(o.value)}
-            className={`rounded-2xl border px-2 py-3 text-sm transition-colors ${active ? 'border-primary bg-primary text-white' : 'border-line bg-surface/70 text-ink hover:bg-primary-soft'}`}
+            className={`rounded-2xl border px-2 py-3 text-sm transition-colors ${active ? 'border-primary-strong bg-primary-strong text-white' : 'border-line bg-surface/70 text-ink hover:bg-primary-soft'}`}
           >
             {o.label}
           </button>

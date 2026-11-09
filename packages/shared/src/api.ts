@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { safeUrl } from './content.js';
 
 /** Collapse whitespace runs and strip control chars; HTML is escaped at render time by React. */
 const clean = (max: number) =>
@@ -34,7 +35,8 @@ export const wishInput = z.object({
   guestCode: guestCodeSchema.optional(),
   name,
   message: clean(1000).pipe(z.string().min(1, 'Message is required')),
-  attendance: attendanceSchema.optional(),
+  /** Lets the server show the sender's RSVP status as a badge (never trusted from the client). */
+  clientToken: clientToken.optional(),
   website: honeypot,
 });
 export type WishInput = z.input<typeof wishInput>;
@@ -123,7 +125,7 @@ export const giftStatusInput = z.object({
 export const wishlistItemInput = z.object({
   name: clean(120).pipe(z.string().min(1)),
   description: clean(500).optional().default(''),
-  imageUrl: z.string().max(2048).optional().default(''),
+  imageUrl: safeUrl.optional().default(''),
   link: z
     .string()
     .trim()

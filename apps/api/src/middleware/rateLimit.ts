@@ -15,6 +15,27 @@ export function createLimiters(config: Config) {
       skip: () => disabled,
       message: json('Too many requests, please slow down.'),
     }),
+    /**
+     * Record creation (RSVPs, wishes, gift confirmations, registry picks). Hourly cap per IP
+     * so rotating browser tokens can't flood rows or claim the whole registry.
+     */
+    create: rateLimit({
+      windowMs: 60 * 60_000,
+      limit: config.RATE_LIMIT_CREATE_PER_HOUR,
+      standardHeaders: 'draft-8',
+      legacyHeaders: false,
+      skip: () => disabled,
+      message: json('Too many submissions from this network. Please try again later.'),
+    }),
+    /** Open tracking fires on every cover tap; keep it off the write budget (CGNAT, venue Wi-Fi). */
+    open: rateLimit({
+      windowMs: 60_000,
+      limit: 240,
+      standardHeaders: 'draft-8',
+      legacyHeaders: false,
+      skip: () => disabled,
+      message: json('Too many requests.'),
+    }),
     /** Public reads. Generous; just prevents scraping floods. */
     publicRead: rateLimit({
       windowMs: 60_000,

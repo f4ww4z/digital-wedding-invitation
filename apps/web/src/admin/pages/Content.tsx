@@ -107,6 +107,12 @@ function Editor({ d, u, tab }: { d: C; u: Update; tab: Tab }) {
             <TextField label="Title" value={d.meta.title} max={120} onChange={(v) => u((x) => void (x.meta.title = v))} />
             <TextField label="Description" multiline rows={2} value={d.meta.description} max={300} onChange={(v) => u((x) => void (x.meta.description = v))} />
             <MediaField label="Preview image" hint="1200×630 works best" value={d.meta.ogImage} onChange={(v) => u((x) => void (x.meta.ogImage = v))} />
+            <Toggle
+              label="Allow search engines"
+              hint="Off keeps the invitation out of Google results. Link previews in WhatsApp work either way."
+              checked={d.meta.allowIndexing}
+              onChange={(v) => u((x) => void (x.meta.allowIndexing = v))}
+            />
             <SelectField
               label="Default language"
               value={d.defaultLocale}
@@ -349,7 +355,7 @@ function Editor({ d, u, tab }: { d: C; u: Update; tab: Tab }) {
 }
 
 export default function ContentEditor() {
-  const q = useAdminQuery<{ content: C; updatedAt: string }>('content', '/api/admin/content');
+  const q = useAdminQuery<{ content: C; updatedAt: string; repaired?: string[] }>('content', '/api/admin/content');
   const qc = useQueryClient();
   const [draft, setDraft] = useState<C | null>(null);
   const [base, setBase] = useState<{ content: C; updatedAt: string } | null>(null);
@@ -423,6 +429,11 @@ export default function ContentEditor() {
           </a>
         }
       />
+      {!!q.data?.repaired?.length && (
+        <div role="status" className="mb-4 rounded-2xl border border-[#c08a1e]/40 bg-[#c08a1e]/10 p-4 text-sm text-[#7a560f]">
+          Some saved values were no longer valid and were reset: <strong>{q.data.repaired.join(', ')}</strong>. Check them, then publish to save.
+        </div>
+      )}
       <div className="lg:grid lg:grid-cols-[12rem_1fr] lg:gap-8">
         <nav aria-label="Content sections" className="-mx-4 mb-4 flex gap-1 overflow-x-auto px-4 pb-1 lg:sticky lg:top-6 lg:mx-0 lg:flex-col lg:self-start lg:px-0">
           {TABS.map((t) => (

@@ -47,7 +47,13 @@ export function rowsToGuests(rows: string[][]): ImportedGuest[] {
   const find = (...keys: string[]) => head.findIndex((h) => keys.some((k) => h === k || h.startsWith(k)));
   const hasHeader = find('name', 'nama') !== -1;
   const idx = hasHeader
-    ? { name: find('name', 'nama'), group: find('group', 'grup', 'kelompok'), phone: find('phone', 'hp', 'wa', 'telepon', 'no'), pax: find('max_pax', 'pax', 'jumlah'), notes: find('notes', 'catatan') }
+    ? {
+        name: find('name', 'nama'),
+        group: find('group', 'grup', 'kelompok'),
+        phone: find('phone', 'hp', 'wa', 'telepon', 'nomor', 'no hp', 'no. hp', 'no wa', 'no telp'),
+        pax: find('max_pax', 'pax', 'jumlah'),
+        notes: find('notes', 'catatan'),
+      }
     : { name: 0, group: 1, phone: 2, pax: 3, notes: 4 };
   return rows
     .slice(hasHeader ? 1 : 0)
@@ -57,7 +63,8 @@ export function rowsToGuests(rows: string[][]): ImportedGuest[] {
       return {
         name: get(idx.name).slice(0, 120),
         group: get(idx.group).slice(0, 60) || undefined,
-        phone: get(idx.phone).slice(0, 30) || undefined,
+        // Strip the apostrophe spreadsheet apps add to protect leading "+".
+        phone: get(idx.phone).replace(/^'/, '').slice(0, 30) || undefined,
         maxPax: Number.isFinite(pax) && pax >= 1 && pax <= 20 ? pax : undefined,
         notes: get(idx.notes).slice(0, 500) || undefined,
       };

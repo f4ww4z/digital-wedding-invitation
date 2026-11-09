@@ -49,7 +49,8 @@ sakinah-digital-invitation/
   couple, parents, Instagram, events, love story, gallery, gift accounts / QRIS / address,
   wishlist, music, theme colors, section toggles, texts in ID + EN, RSVP deadline,
   wish moderation, WhatsApp share template. Stored as one zod-validated JSON document
-  in SQLite (`settings` table, versioned with `updated_at` for optimistic concurrency).
+  in SQLite (`settings` table, versioned with `updated_at`; saves must send it — optimistic concurrency).
+  Search indexing is off by default (`meta.allowIndexing`).
 - **Media library** — admin uploads images (JPEG/PNG/WebP/AVIF, re-encoded to WebP with
   sharp, EXIF stripped, size-capped) and audio (MP3/OGG/M4A, magic-byte checked) into a
   `uploads` volume; served by the API under `/media/*` with `nosniff`, immutable cache and
@@ -79,7 +80,7 @@ sakinah-digital-invitation/
     - "Saya sudah mengirim hadiah" form: name, method (transfer/e-wallet/physical/other),
       optional amount, optional note → admin confirms received.
     - Wishlist registry: items (name, image, link, qty); guest claims → item marks as taken
-      (name optional/public-hidden); claim is cancelable by the same browser token.
+      (name required, visible only to the admin); claim is cancelable by the same browser token.
 12. **RSVP** — attendance (hadir / tidak / ragu), party size (capped per guest), message.
     Pre-filled for coded guests; editable until a configurable deadline.
 13. **Wishes wall** — name, message, attendance badge, relative time, paginated/infinite,
@@ -103,7 +104,9 @@ Desktop: invitation renders in a centered phone-width column with a blurred them
 ## 6. Admin dashboard (`/admin`)
 
 - Login: username + argon2 password hash from `.env`; server session in SQLite,
-  httpOnly + Secure + SameSite=Strict cookie, CSRF token on mutations, login rate-limit + lockout.
+  httpOnly + Secure + SameSite=Strict cookie, CSRF token on mutations, per-IP login rate limit
+  plus a persistent account lockout (15 min after 10 consecutive failures). The env credential's
+  fingerprint is stored as an argon2 hash. Example secrets are refused in production.
 - **Overview**: invites opened, RSVP breakdown, expected headcount, wishes count,
   gift confirmations, wishlist progress, opens-over-time chart.
 - **Guests**: CRUD, groups/tags, max pax, CSV import/export, copy link,
@@ -111,7 +114,7 @@ Desktop: invitation renders in a centered phone-width column with a blurred them
 - **RSVPs**: table + filter + CSV export.
 - **Wishes**: approve/hide/delete.
 - **Gifts**: confirmations list, mark received/notes; wishlist items CRUD + view claims, release claim.
-- **Content editor**: every section of the invitation (texts in ID/EN, couple, events,
+- **Content editor** (shows a notice if stored values became invalid after an upgrade and were reset): every section of the invitation (texts in ID/EN, couple, events,
   story, gallery, gifts, music, theme colors, section toggles) with live preview link.
 - **Media library**: upload / browse / delete images and audio.
 - **Settings**: RSVP deadline, wish moderation on/off, WhatsApp template, change password.
@@ -123,7 +126,9 @@ Public (`/api`):
 - `GET  /content` — sanitized invitation content
 - `GET  /guest/:code` — guest name/pax; records open
 - `POST /rsvp` · `GET /wishes?cursor=` · `POST /wishes`
-- `POST /gifts/confirm` · `GET /wishlist` · `POST /wishlist/:id/claim` · `DELETE /wishlist/:id/claim`
+- `POST /gifts/confirm` · `GET /wishlist` · `POST /wishlist/:id/claim` · `POST /wishlist/:id/unclaim`
+- `POST /open` (open tracking) · `GET /rsvp/me?token=` · `GET /meta` (link-preview tags, spliced into
+  index.html by nginx SSI) · `GET /robots.txt` (follows the *allow search engines* setting)
 - `GET  /health`
 
 Admin (`/api/admin`, session + CSRF): `auth/login|logout|me`, `stats`,
@@ -131,8 +136,11 @@ Admin (`/api/admin`, session + CSRF): `auth/login|logout|me`, `stats`,
 `content` (GET/PUT), `media` (list/upload/delete), `password`.
 Media: `GET /media/:file` (public, served by API).
 
-Public write protection: per-IP rate limits, honeypot field, body size limit (16 KB),
-optional Turnstile, message length caps, HTML stripped on input and escaped on output.
+Public write protection: per-IP per-minute limits, a per-IP hourly cap on record creation
+(RSVPs, wishes, gift confirmations, claims), a separate generous limit for open tracking,
+honeypot fields, body size limit (16 KB), message length caps, control characters stripped,
+output escaped by React. Wish attendance badges are derived server-side from the sender's RSVP.
+(Turnstile remains a possible future addition.)
 
 ## 8. Data model (SQLite / Drizzle)
 
@@ -143,27 +151,30 @@ optional Turnstile, message length caps, HTML stripped on input and escaped on o
 `wishlist_items(id, name, image_url, link, qty, sort, created_at)`
 `wishlist_claims(id, item_id, guest_id?, name, client_token, created_at)`
 `settings(key, value_json, updated_at)` · `media(id, filename, mime, size, width?, height?, created_at)`
-`sessions(id, expires_at, csrf_token)` · `login_attempts(ip, count, locked_until)`
+`sessions(id_hash, expires_at, csrf_token)` · `login_throttle(failures, locked_until)`
 
 ## 9. Docker & hardening
 
 Services: `web` (nginx-unprivileged serving built SPA, proxies `/api` → `api`),
-`api` (node:22-alpine runtime, multi-stage, prod deps only). Only `web` publishes
+`api` (plain Alpine + the Node 24 binary only — no npm/yarn — multi-stage, pruned prod deps). Only `web` publishes
 `${PUBLIC_PORT}`; `api` lives on an `internal: true` network.
 
 Per service: non-root user, `read_only: true` + `tmpfs` for /tmp & nginx cache,
 `cap_drop: [ALL]`, `security_opt: [no-new-privileges:true]`, `pids_limit`, `mem_limit`,
 `cpus`, healthchecks, `restart: unless-stopped`, log rotation, `init: true`,
 pinned image versions. SQLite data and uploads in named volumes.
+HSTS is left to the TLS-terminating proxy (the stack serves plain HTTP by design).
 nginx: strict CSP, HSTS (when behind TLS), `X-Content-Type-Options`, `Referrer-Policy`,
 `Permissions-Policy`, gzip/brotli, long-cache hashed assets, server_tokens off.
 API: helmet, `trust proxy` configurable, no stack traces in prod.
 
 ## 10. Quality
 
-- Vitest (api routes + shared schemas), Playwright e2e (open cover → RSVP → wish → admin sees it) at 390×844.
-- ESLint + Prettier + `tsc --noEmit`; GitHub Actions CI (lint, typecheck, test, docker build).
-- README: quick start, content editing guide, password hash helper, backup (`sqlite3 .backup`), screenshots. MIT license.
+- Vitest (api routes + shared schemas + CSV import), Playwright e2e against the compose stack at
+  390×844 (guest journey incl. 3D cover, admin journey, headers, link previews).
+- ESLint + Prettier + `tsc --noEmit`; GitHub Actions CI (lint, typecheck, test, docker build, e2e).
+- README: quick start, HTTPS, configuration, CSV format, backups (`node dist/scripts/backup.js`,
+  SQLite online backup API), screenshots. SECURITY.md. MIT license.
 
 ## 11. Milestones
 

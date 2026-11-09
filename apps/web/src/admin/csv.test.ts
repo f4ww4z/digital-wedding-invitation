@@ -21,6 +21,9 @@ describe('csv import', () => {
       { name: 'Ani', group: undefined, phone: undefined, maxPax: undefined, notes: undefined },
     ]);
   });
+  it('does not mistake a notes column for the phone column', () => {
+    expect(rowsToGuests(parseCsv("name,notes,phone\nBudi,vegetarian,'+62812"))[0]).toMatchObject({ phone: '+62812', notes: 'vegetarian' });
+  });
   it('works without a header', () => {
     expect(rowsToGuests([['Citra', 'Family']])[0]).toMatchObject({ name: 'Citra', group: 'Family' });
   });

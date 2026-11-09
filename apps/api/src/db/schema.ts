@@ -138,3 +138,9 @@ export const media = sqliteTable('media', {
   originalName: text('original_name').notNull().default(''),
   createdAt: text('created_at').notNull().default(now),
 });
+
+export const loginThrottle = sqliteTable('login_throttle', {
+  id: integer('id').primaryKey(),
+  failures: integer('failures').notNull().default(0),
+  lockedUntil: text('locked_until'),
+});

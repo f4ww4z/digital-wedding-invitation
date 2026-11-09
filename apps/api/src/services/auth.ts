@@ -4,7 +4,7 @@ import { eq, lt } from 'drizzle-orm';
 import type { Logger } from 'pino';
 import type { Config } from '../config.js';
 import type { Db } from '../db/index.js';
-import { admin, sessions } from '../db/schema.js';
+import { admin, loginThrottle, sessions } from '../db/schema.js';
 
 export const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 
@@ -33,10 +33,13 @@ export class AuthService {
    */
   async bootstrapAdmin(): Promise<void> {
     const envSecret = this.config.ADMIN_PASSWORD_HASH || this.config.ADMIN_PASSWORD;
-    const fingerprint = envSecret ? sha256(envSecret) : '';
     const row = this.db.select().from(admin).where(eq(admin.id, 1)).get();
 
-    if (row && (!fingerprint || row.envFingerprint === fingerprint)) return;
+    // The fingerprint of the env credential is itself an argon2 hash, so a leaked DB
+    // never exposes a fast-to-crack digest of the .env password.
+    if (row && !envSecret) return;
+    if (row && row.envFingerprint && (await argon2.verify(row.envFingerprint, envSecret).catch(() => false))) return;
+    const fingerprint = envSecret ? await argon2.hash(envSecret, { type: argon2.argon2id }) : '';
 
     let hash: string;
     if (this.config.ADMIN_PASSWORD_HASH) {
@@ -66,6 +69,36 @@ export class AuthService {
       })
       .run();
     this.log.info(row ? 'Admin password reset from environment' : 'Admin account initialised');
+  }
+
+  /* ---------- Persistent account lockout (survives restarts, independent of IP) ---------- */
+
+  static readonly MAX_FAILURES = 10;
+  static readonly LOCK_MINUTES = 15;
+
+  /** Returns the lock expiry if the admin account is currently locked. */
+  lockedUntil(): Date | null {
+    const row = this.db.select().from(loginThrottle).where(eq(loginThrottle.id, 1)).get();
+    if (!row?.lockedUntil) return null;
+    const until = new Date(row.lockedUntil);
+    return until.getTime() > Date.now() ? until : null;
+  }
+
+  recordFailure(): void {
+    const row = this.db.select().from(loginThrottle).where(eq(loginThrottle.id, 1)).get();
+    const failures = (row?.failures ?? 0) + 1;
+    const lockedUntil =
+      failures >= AuthService.MAX_FAILURES ? new Date(Date.now() + AuthService.LOCK_MINUTES * 60_000).toISOString() : (row?.lockedUntil ?? null);
+    this.db
+      .insert(loginThrottle)
+      .values({ id: 1, failures, lockedUntil })
+      .onConflictDoUpdate({ target: loginThrottle.id, set: { failures, lockedUntil } })
+      .run();
+    if (failures >= AuthService.MAX_FAILURES) this.log.warn({ failures }, 'Admin login locked after repeated failures');
+  }
+
+  recordSuccess(): void {
+    this.db.delete(loginThrottle).run();
   }
 
   async verifyLogin(username: string, password: string): Promise<boolean> {

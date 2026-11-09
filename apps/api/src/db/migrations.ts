@@ -110,4 +110,11 @@ export const migrations: string[] = [
     created_at TEXT NOT NULL DEFAULT ${NOW}
   );
   `,
+  /* 2: persistent admin login lockout */ `
+  CREATE TABLE login_throttle (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    failures INTEGER NOT NULL DEFAULT 0,
+    locked_until TEXT
+  );
+  `,
 ];

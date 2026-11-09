@@ -25,12 +25,20 @@ const envSchema = z.object({
   /** Set to false only when serving over plain HTTP without TLS (local testing). */
   COOKIE_SECURE: bool.default(true),
   MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(100).default(15),
-  RATE_LIMIT_PUBLIC_PER_MIN: z.coerce.number().int().min(1).max(10_000).default(20),
+  RATE_LIMIT_PUBLIC_PER_MIN: z.coerce.number().int().min(1).max(10_000).default(30),
+  /** Max new RSVPs / wishes / gift confirmations / registry picks per IP per hour. */
+  RATE_LIMIT_CREATE_PER_HOUR: z.coerce.number().int().min(1).max(100_000).default(40),
   RATE_LIMIT_LOGIN_PER_15MIN: z.coerce.number().int().min(1).max(1000).default(10),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 });
 
 export type Config = z.infer<typeof envSchema>;
+
+/** Values shipped in .env.example. Running with them would mean a publicly known secret. */
+export const PLACEHOLDERS = {
+  SESSION_SECRET: 'replace-with-a-long-random-string-of-at-least-32-chars',
+  ADMIN_PASSWORD: 'change-me-please-123',
+};
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const parsed = envSchema.safeParse(env);
@@ -38,7 +46,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     const msg = parsed.error.issues.map((i) => `  - ${i.path.join('.')}: ${i.message}`).join('\n');
     throw new Error(`Invalid environment configuration:\n${msg}`);
   }
-  return parsed.data;
+  const c = parsed.data;
+  if (c.NODE_ENV === 'production') {
+    if (c.SESSION_SECRET === PLACEHOLDERS.SESSION_SECRET) {
+      throw new Error('SESSION_SECRET is still the example value. Generate one with: openssl rand -base64 48');
+    }
+    if (c.ADMIN_PASSWORD === PLACEHOLDERS.ADMIN_PASSWORD) {
+      throw new Error('ADMIN_PASSWORD is still the example value. Choose your own (or leave it empty to get a generated one).');
+    }
+  }
+  return c;
 }
 
 export function trustProxyValue(v: string): boolean | number | string {

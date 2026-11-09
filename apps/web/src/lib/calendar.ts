@@ -1,4 +1,5 @@
-import { eventEnd, eventStart, type WeddingEvent } from '@sakinah/shared';
+import type { WeddingEvent } from '@sakinah/shared';
+import { eventEnd, eventStart } from '@sakinah/shared/util';
 
 const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 

@@ -9,6 +9,7 @@ export const defaultContent: InvitationContent = {
     title: 'The Wedding of Alya & Rayhan',
     description: 'Dengan penuh syukur, kami mengundang Anda di hari bahagia kami.',
     ogImage: '/demo/og.jpg',
+    allowIndexing: false,
   },
   theme: {
     preset: 'garden',

@@ -55,7 +55,7 @@ export default function Media() {
                 {m.kind === 'image' ? (
                   <img src={m.url} alt={m.originalName} className="aspect-square w-full object-cover" loading="lazy" />
                 ) : (
-                  <div className="flex aspect-square flex-col items-center justify-center gap-2 bg-primary-soft p-3 text-primary">
+                  <div className="flex aspect-square flex-col items-center justify-center gap-2 bg-primary-soft p-3 text-primary-strong">
                     <Music size={28} aria-hidden />
                     <audio src={m.url} controls preload="none" className="w-full" />
                   </div>

@@ -75,9 +75,10 @@ export function Cover({
         <motion.h1
           id="cover-title"
           className="display-italic mt-4 text-[clamp(3rem,15vw,4.4rem)] text-ink"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 1.2, ease }}
+          // Visible from the first frame (it's the LCP element); motion comes from rise + focus.
+          initial={{ y: 18, filter: 'blur(6px)' }}
+          animate={{ y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 1.2, ease }}
         >
           {a.nickname} <span className="text-primary">&amp;</span> {b.nickname}
         </motion.h1>

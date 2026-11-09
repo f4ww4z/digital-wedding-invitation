@@ -134,7 +134,7 @@ export default function AdminApp() {
             key={n.to}
             to={n.to}
             end={n.end}
-            className={({ isActive }) => `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1 text-[0.65rem] ${isActive ? 'text-primary' : 'text-muted'}`}
+            className={({ isActive }) => `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1 text-[0.65rem] ${isActive ? 'text-primary-strong' : 'text-muted'}`}
           >
             <n.icon size={20} aria-hidden />
             <span className="truncate">{n.label}</span>
