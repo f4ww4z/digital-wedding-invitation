@@ -40,7 +40,7 @@ is editable** — no code, no redeploys. One wedding per deployment, runs anywhe
 Requirements: Docker with Compose v2.
 
 ```bash
-git clone https://github.com/<you>/sakinah-digital-invitation.git
+git clone https://github.com/f4ww4z/sakinah-digital-invitation.git
 cd sakinah-digital-invitation
 cp .env.example .env
 ```
