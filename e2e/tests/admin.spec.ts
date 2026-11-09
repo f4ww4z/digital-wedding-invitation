@@ -74,6 +74,9 @@ test.describe('admin journey', () => {
     await page.getByRole('button', { name: 'Closing & more', exact: true }).click();
     await field.fill(original);
     await page.getByRole('button', { name: 'Publish' }).click();
-    await expect(page.getByText('Changes published')).toBeVisible();
+    // An earlier "Changes published" toast may still be showing; check the live content instead.
+    await expect
+      .poll(async () => (await (await page.request.get('/api/content')).json()).content.closing.signature.en)
+      .toBe(original);
   });
 });
