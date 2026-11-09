@@ -30,7 +30,7 @@ export function Cover({
   const ease = [0.22, 1, 0.36, 1] as const;
   return (
     <motion.div
-      className="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-bg sm:bg-transparent"
+      className={`fixed inset-0 z-40 flex flex-col items-center overflow-hidden bg-bg sm:bg-transparent ${backdrop ? 'justify-end' : 'justify-center'}`}
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.9, delay: 0.6 } }}
       role="dialog"
@@ -65,7 +65,7 @@ export function Cover({
       </div>
 
       <motion.div
-        className="relative z-10 mx-6 flex max-w-[24rem] flex-col items-center text-center"
+        className={`relative z-10 mx-6 flex max-w-[24rem] flex-col items-center text-center ${backdrop ? 'mt-auto mb-[max(6svh,2rem)]' : ''}`}
         animate={opening ? { scale: 1.25, opacity: 0, filter: 'blur(8px)' } : {}}
         transition={{ duration: 1, ease }}
       >
@@ -84,7 +84,7 @@ export function Cover({
         <motion.p className="mt-3 text-sm tracking-[0.3em] text-muted" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
           {c.events[0] ? shortDate(c.events[0]) : ''}
         </motion.p>
-        <motion.div className="mt-12" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1, duration: 0.9 }}>
+        <motion.div className={backdrop ? 'mt-7' : 'mt-12'} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1, duration: 0.9 }}>
           <p className="text-sm text-muted">{l(c.cover.guestPrefix)}</p>
           <p className="display mt-2 text-[1.9rem] font-medium text-ink">{guestName}</p>
         </motion.div>
@@ -92,7 +92,7 @@ export function Cover({
           type="button"
           onClick={onOpen}
           disabled={opening}
-          className="btn btn-primary mt-10 !px-7 !py-3.5 shadow-[0_14px_30px_-12px_var(--c-primary)]"
+          className={`btn btn-primary ${backdrop ? 'mt-7' : 'mt-10'} !px-7 !py-3.5 shadow-[0_14px_30px_-12px_var(--c-primary)]`}
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 1.5, type: 'spring', stiffness: 200, damping: 16 }}

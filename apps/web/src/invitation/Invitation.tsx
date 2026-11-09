@@ -5,6 +5,7 @@ import Lenis from 'lenis';
 import { api } from '../lib/api';
 import { applyTheme, readGuestParams, useContent, useGuest } from '../lib/content';
 import { hasStoredLocale, setLocale, useL } from '../lib/i18n';
+import { shortDate } from '../lib/format';
 import { Cover } from './Cover';
 import { Controls, useMusic } from './Controls';
 import { requestMotionPermission, TiltProvider } from './motion';
@@ -147,7 +148,11 @@ export default function Invitation() {
                 backdrop={
                   use3D ? (
                     <Suspense fallback={null}>
-                      <CoverScene opening={opening} />
+                      <CoverScene
+                        opening={opening}
+                        title={c.couple.order === 'bride-first' ? `${c.couple.bride.nickname} & ${c.couple.groom.nickname}` : `${c.couple.groom.nickname} & ${c.couple.bride.nickname}`}
+                        subtitle={c.events[0] ? shortDate(c.events[0]) : ''}
+                      />
                     </Suspense>
                   ) : undefined
                 }
