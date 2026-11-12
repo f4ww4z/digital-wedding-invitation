@@ -67,6 +67,56 @@ export function Modal({ open, onClose, label, children }: { open: boolean; onClo
   );
 }
 
+/**
+ * Bottom sheet on phones, centred card on wider screens. Same <dialog> base as
+ * Modal (native focus trap, Esc, backdrop click); the body scrolls on its own.
+ */
+export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const { t } = useTranslation();
+  useEffect(() => {
+    const d = ref.current;
+    if (!d) return;
+    if (open && !d.open) d.showModal();
+    if (!open && d.open) d.close();
+    document.body.classList.toggle('scroll-locked', open);
+    return () => document.body.classList.remove('scroll-locked');
+  }, [open]);
+  return (
+    <dialog
+      ref={ref}
+      aria-label={title}
+      onClose={onClose}
+      onClick={(e) => {
+        if (e.target === ref.current) onClose();
+      }}
+      // Lenis would otherwise swallow wheel events meant for the sheet body.
+      data-lenis-prevent
+      className="mx-auto mb-0 mt-auto max-h-[90svh] w-full max-w-[30rem] overflow-hidden rounded-t-[2rem] bg-bg p-0 text-ink shadow-2xl backdrop:bg-[rgb(30_20_35/0.5)] backdrop:backdrop-blur-sm sm:mb-auto sm:max-w-[28rem] sm:rounded-[2rem]"
+    >
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ y: 60, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 30 }}
+            className="flex max-h-[90svh] flex-col"
+          >
+            <div className="relative shrink-0 px-6 pb-3 pt-3 text-center">
+              <span aria-hidden className="mx-auto mb-3 block h-1.5 w-11 rounded-full bg-ink/15 sm:hidden" />
+              <h3 className="display-italic text-[1.9rem] leading-tight">{title}</h3>
+              <button type="button" onClick={onClose} aria-label={t('close')} className="absolute right-3 top-3 rounded-full p-2 text-muted hover:bg-primary-soft">
+                <X size={20} aria-hidden />
+              </button>
+            </div>
+            <div className="overflow-y-auto overscroll-contain px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </dialog>
+  );
+}
+
 export function SegmentedChoice<T extends string>({
   name,
   value,

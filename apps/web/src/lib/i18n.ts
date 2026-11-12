@@ -145,7 +145,7 @@ const resources = {
       showQr: 'Show QR',
       accountHolder: 'Account name: {{holder}}',
       sendGiftTo: 'Send a gift to',
-      confirmGift: 'Let us know you sent a gift',
+      confirmGift: 'Send or confirm a gift',
       swipeHint: 'tap the seal or swipe up',
       scrollHint: 'Scroll down',
       digitalEnvelope: 'Digital envelope',
