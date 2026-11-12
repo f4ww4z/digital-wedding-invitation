@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'motion/react';
 import { Languages, Music2, Pause } from 'lucide-react';
-import type { InvitationContent } from '@sakinah/shared';
+import type { InvitationContent } from '@wedding/shared';
 import { setLocale } from '../lib/i18n';
 
 export function useMusic(c: InvitationContent) {

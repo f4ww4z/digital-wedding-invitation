@@ -1,6 +1,6 @@
 /**
  * Pure helpers with no runtime dependencies (no zod), safe to import from the
- * guest-facing bundle via `@sakinah/shared/util`.
+ * guest-facing bundle via `@wedding/shared/util`.
  */
 import type { InvitationContent, WeddingEvent } from './content.js';
 

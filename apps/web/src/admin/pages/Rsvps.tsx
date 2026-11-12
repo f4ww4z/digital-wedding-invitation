@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Download, Trash2 } from 'lucide-react';
-import type { AdminRsvp, Attendance } from '@sakinah/shared';
+import type { AdminRsvp, Attendance } from '@wedding/shared';
 import { api } from '../../lib/api';
 import { fmtDate, useAdminMutation, useAdminQuery } from '../hooks';
 import { Badge, Card, confirmAction, Empty, PageHeader } from '../components/ui';

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'motion/react';
 import { CalendarPlus, Clock, MapPin, Navigation } from 'lucide-react';
-import type { InvitationContent, WeddingEvent } from '@sakinah/shared';
+import type { InvitationContent, WeddingEvent } from '@wedding/shared';
 import { useL } from '../../lib/i18n';
 import { eventDateParts } from '../../lib/format';
 import { googleCalendarUrl } from '../../lib/calendar';

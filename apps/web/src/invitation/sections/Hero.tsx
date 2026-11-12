@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import type { InvitationContent } from '@sakinah/shared';
+import type { InvitationContent } from '@wedding/shared';
 import { useL } from '../../lib/i18n';
 import { shortDate } from '../../lib/format';
 import { Depth } from '../motion';

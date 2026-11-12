@@ -32,7 +32,7 @@ export default function AdminApp() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   useEffect(() => {
-    document.title = 'Admin · Sakinah';
+    document.title = 'Admin · Wedding Invitation';
     const robots = document.createElement('meta');
     robots.name = 'robots';
     robots.content = 'noindex, nofollow';
@@ -71,7 +71,7 @@ export default function AdminApp() {
       <aside className="sticky top-0 hidden h-svh flex-col border-r border-line bg-surface/70 p-4 lg:flex">
         <div className="mb-6 flex items-center gap-2 px-2">
           <Bloom size={30} />
-          <span className="display text-xl">Sakinah</span>
+          <span className="display text-xl">Wedding Admin</span>
         </div>
         <nav className="flex flex-col gap-1" aria-label="Admin">
           {NAV.map((n) => (
@@ -94,7 +94,7 @@ export default function AdminApp() {
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-surface/90 px-4 py-3 backdrop-blur lg:hidden">
         <span className="flex items-center gap-2">
           <Bloom size={24} />
-          <span className="display text-lg">Sakinah</span>
+          <span className="display text-lg">Wedding Admin</span>
         </span>
         <div className="flex gap-1">
           <NavLink to="/admin/media" className="rounded-full p-2 text-muted hover:bg-line" aria-label="Media">

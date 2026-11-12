@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { CheckCircle2, ExternalLink, Gift as GiftIcon, Landmark, MapPin, QrCode, Send, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
-import type { InvitationContent, PublicWishlistItem } from '@sakinah/shared';
+import type { InvitationContent, PublicWishlistItem } from '@wedding/shared';
 import { api, errorMessage } from '../../lib/api';
 import { clientToken, rememberName } from '../../lib/clientToken';
 import { useL } from '../../lib/i18n';

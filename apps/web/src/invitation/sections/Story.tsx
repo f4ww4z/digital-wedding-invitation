@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, useScroll, useSpring } from 'motion/react';
-import type { InvitationContent } from '@sakinah/shared';
+import type { InvitationContent } from '@wedding/shared';
 import { useL } from '../../lib/i18n';
 import { Section, SectionTitle } from '../motion';
 import { Bloom } from '../ornaments/Florals';

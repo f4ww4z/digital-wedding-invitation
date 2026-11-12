@@ -5,14 +5,14 @@ import { pino } from 'pino';
 import sharp from 'sharp';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { defaultContent, type InvitationContent } from '@sakinah/shared';
+import { defaultContent, type InvitationContent } from '@wedding/shared';
 import { createApp, type App } from './app.js';
 import { loadConfig, PLACEHOLDERS } from './config.js';
 import { openDb } from './db/index.js';
 import { csvCell } from './http.js';
 
 const PASSWORD = 'correct-horse-battery';
-const uploadDir = mkdtempSync(join(tmpdir(), 'sakinah-test-'));
+const uploadDir = mkdtempSync(join(tmpdir(), 'invitation-test-'));
 
 let ctx: App;
 let agent: ReturnType<typeof request.agent>;
@@ -97,7 +97,7 @@ describe('admin auth', () => {
   });
 
   it('rejects tampered session cookies', async () => {
-    await request(ctx.app).get('/api/admin/stats').set('Cookie', 'sakinah_session=s%3Afake.sig').expect(401);
+    await request(ctx.app).get('/api/admin/stats').set('Cookie', 'wedding_session=s%3Afake.sig').expect(401);
   });
 });
 

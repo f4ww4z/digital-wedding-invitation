@@ -1,4 +1,4 @@
-# Sakinah — digital wedding invitation
+# Digital Wedding Invitation
 
 A self-hosted, mobile-first wedding invitation with a real-time 3D envelope, layered
 garden animations, RSVP, wishes, gift tracking and an admin dashboard where **everything
@@ -40,8 +40,8 @@ is editable** — no code, no redeploys. One wedding per deployment, runs anywhe
 Requirements: Docker with Compose v2.
 
 ```bash
-git clone https://github.com/f4ww4z/sakinah-digital-invitation.git
-cd sakinah-digital-invitation
+git clone https://github.com/f4ww4z/digital-wedding-invitation.git
+cd digital-wedding-invitation
 cp .env.example .env
 ```
 
@@ -113,15 +113,15 @@ separators all work. Indonesian numbers like `0812…` are converted for WhatsAp
 
 ```bash
 # Database (consistent, safe while running)
-docker compose exec api node dist/scripts/backup.js        # prints /data/backups/sakinah-<time>.db
+docker compose exec api node dist/scripts/backup.js        # prints /data/backups/invitation-<time>.db
 docker compose cp api:/data/backups ./backups
 
 # Uploaded photos and music
-docker run --rm -v sakinah_sakinah-uploads:/u -v "$PWD":/b alpine tar czf /b/uploads.tgz -C /u .
+docker run --rm -v wedding-invitation_uploads:/u -v "$PWD":/b alpine tar czf /b/uploads.tgz -C /u .
 ```
 
-Restore by stopping the stack and copying the `.db` back to `/data/sakinah.db` in the
-`sakinah_sakinah-data` volume. Updating is `git pull && docker compose up -d --build`;
+Restore by stopping the stack and copying the `.db` back to `/data/invitation.db` in the
+`wedding-invitation_data` volume. Updating is `git pull && docker compose up -d --build`;
 database migrations run automatically on start.
 
 ## Security

@@ -1,7 +1,7 @@
 import { useRef, useState, type DragEvent } from 'react';
 import { Copy, Music, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import type { MediaItem } from '@sakinah/shared';
+import type { MediaItem } from '@wedding/shared';
 import { api } from '../../lib/api';
 import { fmtDate, useAdminMutation, useAdminQuery } from '../hooks';
 import { confirmAction, Empty, PageHeader } from '../components/ui';

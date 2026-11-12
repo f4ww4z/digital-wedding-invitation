@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { desc, eq } from 'drizzle-orm';
 import { customAlphabet } from 'nanoid';
 import sharp from 'sharp';
-import type { MediaItem } from '@sakinah/shared';
+import type { MediaItem } from '@wedding/shared';
 import type { Db } from '../db/index.js';
 import { media } from '../db/schema.js';
 import { HttpError } from '../http.js';

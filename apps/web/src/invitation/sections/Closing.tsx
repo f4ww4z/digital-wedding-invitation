@@ -1,11 +1,9 @@
-import { useTranslation } from 'react-i18next';
-import type { InvitationContent } from '@sakinah/shared';
+import type { InvitationContent } from '@wedding/shared';
 import { useL } from '../../lib/i18n';
 import { Depth, Reveal, Section } from '../motion';
 import { CornerCluster, FloralDivider } from '../ornaments/Florals';
 
 export function Closing({ c }: { c: InvitationContent }) {
-  const { t } = useTranslation();
   const { l } = useL();
   const [a, b] = c.couple.order === 'bride-first' ? [c.couple.bride, c.couple.groom] : [c.couple.groom, c.couple.bride];
   return (
@@ -32,7 +30,6 @@ export function Closing({ c }: { c: InvitationContent }) {
           {a.nickname} <span className="text-primary">&amp;</span> {b.nickname}
         </p>
       </Reveal>
-      <p className="relative z-10 mt-16 text-xs text-muted/80">{t('madeWith')}</p>
     </Section>
   );
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@sakinah/web",
+  "name": "@wedding/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -30,7 +30,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@sakinah/shared": "workspace:*",
+    "@wedding/shared": "workspace:*",
     "@tailwindcss/vite": "^4.3.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

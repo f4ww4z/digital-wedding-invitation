@@ -16,7 +16,7 @@ COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
 COPY packages/shared/package.json packages/shared/
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --filter '!@sakinah/e2e'
+    pnpm install --frozen-lockfile --filter '!@wedding/e2e'
 
 # ---------- build ----------
 FROM deps AS build
@@ -24,9 +24,9 @@ COPY tsconfig.base.json ./
 COPY packages/shared packages/shared
 COPY apps/api apps/api
 COPY apps/web apps/web
-RUN pnpm --filter @sakinah/api build \
- && pnpm --filter @sakinah/web build \
- && pnpm --filter @sakinah/api deploy --prod --legacy /out/api \
+RUN pnpm --filter @wedding/api build \
+ && pnpm --filter @wedding/web build \
+ && pnpm --filter @wedding/api deploy --prod --legacy /out/api \
  && cp -r apps/api/dist /out/api/dist
 
 # Prune what the runtime never loads: other-OS native prebuilds, glibc libvips

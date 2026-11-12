@@ -9,5 +9,5 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   // Bundle the workspace package (consumed as TS source); keep real deps external.
-  noExternal: ['@sakinah/shared'],
+  noExternal: ['@wedding/shared'],
 });

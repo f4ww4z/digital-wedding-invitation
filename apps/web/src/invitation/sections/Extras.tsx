@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Camera, Clock, Gift, HandHeart, Phone, Shirt, ShieldPlus, Users, Utensils, Video, HeartHandshake } from 'lucide-react';
-import type { InvitationContent } from '@sakinah/shared';
-import type { etiquetteIcons } from '@sakinah/shared';
+import type { InvitationContent } from '@wedding/shared';
+import type { etiquetteIcons } from '@wedding/shared';
 import { useL } from '../../lib/i18n';
 import { Reveal, Section, SectionTitle } from '../motion';
 

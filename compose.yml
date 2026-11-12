@@ -1,10 +1,10 @@
-# Sakinah Digital Invitation — production compose file.
+# Digital Wedding Invitation — production compose file.
 #   cp .env.example .env   # then edit it
 #   docker compose up -d --build
 # Only the `web` service publishes a port. The API sits on an internal network
 # with no route to the internet.
 
-name: sakinah
+name: wedding-invitation
 
 x-hardening: &hardening
   read_only: true
@@ -26,7 +26,7 @@ services:
     build:
       context: .
       target: api
-    image: sakinah/api:${IMAGE_TAG:-latest}
+    image: wedding-invitation/api:${IMAGE_TAG:-latest}
     env_file: .env
     environment:
       NODE_ENV: production
@@ -36,8 +36,8 @@ services:
       UPLOAD_DIR: /uploads
       TZ: ${TZ:-Asia/Jakarta}
     volumes:
-      - sakinah-data:/data
-      - sakinah-uploads:/uploads
+      - data:/data
+      - uploads:/uploads
     tmpfs:
       - /tmp:size=128m,mode=1777,noexec,nosuid,nodev
     networks:
@@ -60,7 +60,7 @@ services:
     build:
       context: .
       target: web
-    image: sakinah/web:${IMAGE_TAG:-latest}
+    image: wedding-invitation/web:${IMAGE_TAG:-latest}
     depends_on:
       api:
         condition: service_healthy
@@ -88,5 +88,5 @@ networks:
     internal: true
 
 volumes:
-  sakinah-data: {}
-  sakinah-uploads: {}
+  data: {}
+  uploads: {}

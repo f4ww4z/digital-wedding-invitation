@@ -1,4 +1,4 @@
-import type { InvitationContent, PublicGuest } from '@sakinah/shared';
+import type { InvitationContent, PublicGuest } from '@wedding/shared';
 import { Hero } from './sections/Hero';
 import { Opening } from './sections/Opening';
 import { Couple } from './sections/Couple';

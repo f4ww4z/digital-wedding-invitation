@@ -1,4 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+/** Drag upward from the wax seal by `share` of the viewport height. */
+async function swipeUp(page: Page, share: number) {
+  const box = (await page.getByRole('button', { name: /Buka Undangan|Open Invitation/ }).boundingBox())!;
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  const h = page.viewportSize()!.height;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  for (let i = 1; i <= 12; i++) await page.mouse.move(x, y - (h * share * i) / 12);
+  await page.mouse.up();
+}
 
 const stamp = Date.now().toString(36);
 
@@ -60,5 +72,57 @@ test.describe('guest journey', () => {
     await page.getByRole('button', { name: /Buka Undangan|Open Invitation/ }).click();
     await expect(page.locator('#home')).toBeVisible({ timeout: 10_000 });
     await expect(page.locator('canvas')).toHaveCount(0, { timeout: 10_000 }); // unmounted after opening
+  });
+
+  test('swiping the envelope up past the threshold opens it', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('canvas')).toHaveCount(1, { timeout: 15_000 });
+    await expect(page.locator('body')).toHaveClass(/scroll-locked/);
+    await swipeUp(page, 0.25); // ~78% of a full swipe, past the 45% commit point
+    await expect(page.locator('#home')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId('scroll-hint')).toBeVisible();
+    await page.mouse.wheel(0, 600);
+    await expect(page.getByTestId('scroll-hint')).toHaveCount(0, { timeout: 5_000 });
+  });
+
+  test('a short swipe springs back and keeps the cover', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('canvas')).toHaveCount(1, { timeout: 15_000 });
+    await swipeUp(page, 0.05);
+    await page.waitForTimeout(1500);
+    await expect(page.locator('#cover-title')).toBeVisible();
+    await expect(page.locator('#home')).toHaveCount(0);
+  });
+
+  test('keyboard can open the cover', async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: 'reduce' });
+    const page = await ctx.newPage();
+    await page.goto('/');
+    await page.getByRole('button', { name: /Buka Undangan|Open Invitation/ }).focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('#home')).toBeVisible();
+    await ctx.close();
+  });
+
+  test('gift options stay tucked away until asked for', async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: 'reduce', viewport: { width: 390, height: 844 } });
+    const page = await ctx.newPage();
+    await page.goto(`/?to=${encodeURIComponent(`Gift ${stamp}`)}`);
+    await page.getByRole('button', { name: /Buka Undangan|Open Invitation/ }).click();
+    const gift = page.locator('#gift');
+    await gift.scrollIntoViewIfNeeded();
+    const cta = gift.getByRole('button', { name: /Konfirmasi kirim hadiah|Send or confirm a gift/ });
+    await expect(cta).toBeVisible();
+    await expect(page.getByText('1234567890', { exact: true })).toBeHidden();
+
+    await cta.click();
+    const sheet = page.getByRole('dialog', { name: /Kirim tanda kasih|Send a gift/ });
+    await expect(sheet.getByText('1234567890', { exact: true })).toBeVisible();
+    await sheet.getByRole('radio', { name: /Dompet digital|E-wallet/ }).click();
+    await sheet.getByRole('button', { name: /Kirim konfirmasi|Send confirmation/ }).click();
+    await expect(sheet.getByText(/Terima kasih|Thank you/).first()).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(sheet).toBeHidden();
+    await ctx.close();
   });
 });

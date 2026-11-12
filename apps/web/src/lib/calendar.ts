@@ -1,5 +1,5 @@
-import type { WeddingEvent } from '@sakinah/shared';
-import { eventEnd, eventStart } from '@sakinah/shared/util';
+import type { WeddingEvent } from '@wedding/shared';
+import { eventEnd, eventStart } from '@wedding/shared/util';
 
 const stamp = (d: Date) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
 
@@ -18,11 +18,11 @@ export function googleCalendarUrl(e: WeddingEvent, title: string, details: strin
 }
 
 export function downloadIcs(events: { e: WeddingEvent; title: string }[], details: string, filename = 'wedding.ics') {
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Sakinah//Invitation//EN', 'CALSCALE:GREGORIAN'];
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Digital Wedding Invitation//EN', 'CALSCALE:GREGORIAN'];
   for (const { e, title } of events) {
     lines.push(
       'BEGIN:VEVENT',
-      `UID:${e.id}-${stamp(eventStart(e))}@sakinah`,
+      `UID:${e.id}-${stamp(eventStart(e))}@invitation`,
       `DTSTAMP:${stamp(new Date())}`,
       `DTSTART:${stamp(eventStart(e))}`,
       `DTEND:${stamp(eventEnd(e))}`,

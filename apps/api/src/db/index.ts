@@ -5,6 +5,9 @@ import { join, resolve } from 'node:path';
 import * as schema from './schema.js';
 import { migrations } from './migrations.js';
 
+/** Database file inside DATA_DIR. */
+export const DB_FILE = 'invitation.db';
+
 export type Db = BetterSQLite3Database<typeof schema> & { $client: Database.Database };
 
 /** Open (or create) the SQLite database and apply pending migrations. Use ':memory:' in tests. */
@@ -12,7 +15,7 @@ export function openDb(dataDir: string): Db {
   let file = ':memory:';
   if (dataDir !== ':memory:') {
     mkdirSync(dataDir, { recursive: true });
-    file = join(resolve(dataDir), 'sakinah.db');
+    file = join(resolve(dataDir), DB_FILE);
   }
   const sqlite = new Database(file);
   sqlite.pragma('journal_mode = WAL');

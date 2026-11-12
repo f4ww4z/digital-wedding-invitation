@@ -1,4 +1,4 @@
-import type { ApiError } from '@sakinah/shared';
+import type { ApiError } from '@wedding/shared';
 
 export class ApiRequestError extends Error {
   constructor(

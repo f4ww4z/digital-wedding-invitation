@@ -2,7 +2,7 @@ import { animate, motion, useMotionValue, useTransform, type AnimationPlaybackCo
 import { ChevronsUp, MailOpen } from 'lucide-react';
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { InvitationContent } from '@sakinah/shared';
+import type { InvitationContent } from '@wedding/shared';
 import { useL } from '../lib/i18n';
 import { shortDate } from '../lib/format';
 import { envelopeLayout } from '../three/layout';

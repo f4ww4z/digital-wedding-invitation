@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { contentSchema, defaultContent, type InvitationContent } from '@sakinah/shared';
+import { contentSchema, defaultContent, type InvitationContent } from '@wedding/shared';
 import type { Logger } from 'pino';
 import type { Db } from '../db/index.js';
 import { settings, wishlistItems } from '../db/schema.js';

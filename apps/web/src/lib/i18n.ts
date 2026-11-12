@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next, useTranslation } from 'react-i18next';
 import { useCallback } from 'react';
-import type { LText, Locale } from '@sakinah/shared';
+import type { LText, Locale } from '@wedding/shared';
 
 /** UI chrome strings. Invitation content itself is localized in the admin-edited content. */
 const resources = {
@@ -101,7 +101,6 @@ const resources = {
       required: 'Wajib diisi',
       somethingWrong: 'Gagal memuat undangan. Periksa koneksi lalu muat ulang.',
       retry: 'Muat ulang',
-      madeWith: 'Dibuat dengan Sakinah',
       justNow: 'baru saja',
     },
   },
@@ -201,13 +200,12 @@ const resources = {
       required: 'Required',
       somethingWrong: "Couldn't load the invitation. Check your connection and reload.",
       retry: 'Reload',
-      madeWith: 'Made with Sakinah',
       justNow: 'just now',
     },
   },
 } as const;
 
-const LS_KEY = 'sakinah.lang';
+const LS_KEY = 'invitation.lang';
 
 export function initI18n(fallback: Locale = 'id') {
   let stored: string | null = null;

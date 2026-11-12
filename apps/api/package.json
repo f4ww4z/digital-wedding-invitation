@@ -1,5 +1,5 @@
 {
-  "name": "@sakinah/api",
+  "name": "@wedding/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -28,7 +28,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@sakinah/shared": "workspace:*",
+    "@wedding/shared": "workspace:*",
     "@types/better-sqlite3": "^9.6.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",

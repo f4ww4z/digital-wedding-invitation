@@ -3,7 +3,7 @@ import type { Config } from '../config.js';
 import type { AuthService } from '../services/auth.js';
 import { safeEqual } from '../services/auth.js';
 
-export const SESSION_COOKIE = 'sakinah_session';
+export const SESSION_COOKIE = 'wedding_session';
 
 export function sessionCookieOptions(config: Config, expires?: Date): CookieOptions {
   return {

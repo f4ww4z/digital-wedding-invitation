@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Check, Download, EyeOff, Trash2 } from 'lucide-react';
-import type { AdminWish } from '@sakinah/shared';
+import type { AdminWish } from '@wedding/shared';
 import { api } from '../../lib/api';
 import { fmtDate, useAdminMutation, useAdminQuery } from '../hooks';
 import { Badge, Card, confirmAction, Empty, PageHeader } from '../components/ui';

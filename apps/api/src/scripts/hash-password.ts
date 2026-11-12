@@ -1,6 +1,6 @@
 /**
  * Print an argon2id hash for ADMIN_PASSWORD_HASH.
- * Usage: pnpm --filter @sakinah/api hash-password  (reads password from stdin)
+ * Usage: pnpm --filter @wedding/api hash-password  (reads password from stdin)
  *    or: docker compose run --rm api node dist/scripts/hash-password.js
  */
 import argon2 from 'argon2';

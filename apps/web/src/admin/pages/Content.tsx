@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ExternalLink, RotateCcw, Save, Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import { contentSchema, etiquetteIcons, type InvitationContent, type LText, type Person, type WeddingEvent } from '@sakinah/shared';
+import { contentSchema, etiquetteIcons, type InvitationContent, type LText, type Person, type WeddingEvent } from '@wedding/shared';
 import { api, ApiRequestError, errorMessage } from '../../lib/api';
 import { useAdminQuery } from '../hooks';
 import { Card, PageHeader } from '../components/ui';

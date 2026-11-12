@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import type { InvitationContent, Person } from '@sakinah/shared';
+import type { InvitationContent, Person } from '@wedding/shared';
 import { useL } from '../../lib/i18n';
 import { Depth, Section } from '../motion';
 import { Bloom, Leaf } from '../ornaments/Florals';

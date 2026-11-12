@@ -1,4 +1,4 @@
-import type { InvitationContent } from '@sakinah/shared';
+import type { InvitationContent } from '@wedding/shared';
 import { useL } from '../../lib/i18n';
 import { Depth, Reveal, Section } from '../motion';
 import { FloralDivider, Leaf } from '../ornaments/Florals';

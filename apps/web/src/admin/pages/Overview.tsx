@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import type { AdminStats } from '@sakinah/shared';
+import type { AdminStats } from '@wedding/shared';
 import { formatMoney } from '../../lib/format';
 import { useAdminQuery } from '../hooks';
 import { Card, PageHeader } from '../components/ui';

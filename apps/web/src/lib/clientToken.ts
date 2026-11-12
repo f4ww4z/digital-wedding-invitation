@@ -1,5 +1,5 @@
 /** A random per-browser id so guests can edit their own RSVP / undo their own wishlist claim. */
-const KEY = 'sakinah.clientToken';
+const KEY = 'invitation.clientToken';
 
 function random(): string {
   const bytes = new Uint8Array(24);
@@ -24,8 +24,8 @@ export function clientToken(): string {
 
 export function rememberName(name?: string): string {
   try {
-    if (name !== undefined) localStorage.setItem('sakinah.name', name);
-    return localStorage.getItem('sakinah.name') ?? '';
+    if (name !== undefined) localStorage.setItem('invitation.name', name);
+    return localStorage.getItem('invitation.name') ?? '';
   } catch {
     return name ?? '';
   }

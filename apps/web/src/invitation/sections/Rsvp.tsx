@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { Minus, Plus } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Attendance, InvitationContent, PublicGuest } from '@sakinah/shared';
+import type { Attendance, InvitationContent, PublicGuest } from '@wedding/shared';
 import { api, errorMessage } from '../../lib/api';
 import { clientToken, rememberName } from '../../lib/clientToken';
 import { Section, SectionTitle } from '../motion';

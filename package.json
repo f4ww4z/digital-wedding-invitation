@@ -1,5 +1,5 @@
 {
-  "name": "sakinah-digital-invitation",
+  "name": "digital-wedding-invitation",
   "version": "0.1.0",
   "private": true,
   "description": "Open-source, self-hosted, animated semi-3D digital wedding invitation with RSVP, wishes, gift tracking and an admin dashboard.",
@@ -10,13 +10,13 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "concurrently -k -n api,web -c magenta,cyan \"pnpm --filter @sakinah/api dev\" \"pnpm --filter @sakinah/web dev\"",
+    "dev": "concurrently -k -n api,web -c magenta,cyan \"pnpm --filter @wedding/api dev\" \"pnpm --filter @wedding/web dev\"",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "test": "pnpm -r --filter '!@sakinah/e2e' test",
-    "test:e2e": "pnpm --filter @sakinah/e2e test"
+    "test": "pnpm -r --filter '!@wedding/e2e' test",
+    "test:e2e": "pnpm --filter @wedding/e2e test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",

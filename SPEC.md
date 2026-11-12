@@ -1,4 +1,4 @@
-# Sakinah Digital Invitation — Spec
+# Digital Wedding Invitation — Spec
 
 Open-source, self-hosted, mobile-first, animated semi-3D digital wedding invitation
 with RSVP, wishes, gift tracking and an admin dashboard. **One wedding per deployment.**
@@ -22,7 +22,7 @@ Reference sites studied (2026-11-09): story.leafitation.com, aadigital.my.id, ha
 ## 2. Repository layout
 
 ```
-sakinah-digital-invitation/
+digital-wedding-invitation/
 ├─ apps/
 │  ├─ web/                 # React app: "/" invitation, "/admin" dashboard
 │  │  ├─ src/sections/     # Cover, Opening, Couple, Countdown, Events, Story, Gallery, Gift, Rsvp, Wishes, Closing

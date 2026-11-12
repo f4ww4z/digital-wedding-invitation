@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { CheckCircle2, Circle, Download, ExternalLink, Pencil, Plus, Trash2, Undo2 } from 'lucide-react';
-import type { AdminGift, AdminWishlistItem } from '@sakinah/shared';
+import type { AdminGift, AdminWishlistItem } from '@wedding/shared';
 import { api } from '../../lib/api';
 import { formatMoney } from '../../lib/format';
 import { fmtDate, useAdminMutation, useAdminQuery } from '../hooks';

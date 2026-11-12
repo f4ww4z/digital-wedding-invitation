@@ -18,7 +18,7 @@ import {
   type AdminStats,
   type AdminWish,
   type AdminWishlistItem,
-} from '@sakinah/shared';
+} from '@wedding/shared';
 import type { Config } from '../config.js';
 import type { Db } from '../db/index.js';
 import {

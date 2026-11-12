@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
-import type { InvitationContent, WishesPage } from '@sakinah/shared';
+import type { InvitationContent, WishesPage } from '@wedding/shared';
 import { api, errorMessage } from '../../lib/api';
 import { clientToken, rememberName } from '../../lib/clientToken';
 import { useL } from '../../lib/i18n';

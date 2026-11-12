@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import type { InvitationContent, PublicGuest } from '@sakinah/shared';
+import type { InvitationContent, PublicGuest } from '@wedding/shared';
 import { api } from './api';
 
 export function useContent() {

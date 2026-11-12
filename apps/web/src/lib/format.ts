@@ -1,4 +1,4 @@
-import type { Locale, WeddingEvent } from '@sakinah/shared';
+import type { Locale, WeddingEvent } from '@wedding/shared';
 
 const intl = (l: Locale) => (l === 'id' ? 'id-ID' : 'en-GB');
 

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { Copy, Download, Pencil, Plus, RefreshCw, Search, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import { fillTemplate, type AdminGuest, type GuestInput, type InvitationContent } from '@sakinah/shared';
+import { fillTemplate, type AdminGuest, type GuestInput, type InvitationContent } from '@wedding/shared';
 import { api } from '../../lib/api';
 import { parseCsv, rowsToGuests, waNumber, type ImportedGuest } from '../csv';
 import { fmtDate, inviteLink, useAdminMutation, useAdminQuery } from '../hooks';

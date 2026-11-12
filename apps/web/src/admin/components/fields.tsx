@@ -2,7 +2,7 @@ import { useId, useRef, useState, type ReactNode } from 'react';
 import { ArrowDown, ArrowUp, ImagePlus, Music, Plus, Trash2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
-import type { LText, MediaItem } from '@sakinah/shared';
+import type { LText, MediaItem } from '@wedding/shared';
 import { api, errorMessage } from '../../lib/api';
 import { useAdminQuery } from '../hooks';
 import { Dialog } from './ui';

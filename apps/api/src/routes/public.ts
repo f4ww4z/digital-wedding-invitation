@@ -12,7 +12,7 @@ import {
   type PublicWish,
   type PublicWishlistItem,
   type WishesPage,
-} from '@sakinah/shared';
+} from '@wedding/shared';
 import type { Db } from '../db/index.js';
 import {
   giftConfirmations,
