@@ -1,5 +1,6 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-import { AnimatePresence, MotionConfig } from 'motion/react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
+import { ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Lenis from 'lenis';
 import { api } from '../lib/api';
@@ -23,6 +24,41 @@ function DesktopBackdrop() {
         <CornerCluster scale={2.4} />
       </div>
     </div>
+  );
+}
+
+/** A faint nudge after opening; gone for good on the first scroll. */
+function ScrollHint() {
+  const { t } = useTranslation();
+  const [show, setShow] = useState(true);
+  useEffect(() => {
+    const onScroll = () => window.scrollY > 60 && setShow(false);
+    const timer = setTimeout(() => setShow(false), 9000);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          aria-hidden
+          data-testid="scroll-hint"
+          className="pointer-events-none fixed inset-x-0 bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-30 flex flex-col items-center text-xs tracking-[0.2em] text-muted"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 0.6, y: 0 }}
+          exit={{ opacity: 0, transition: { duration: 0.6 } }}
+          transition={{ delay: 1.2, duration: 1 }}
+        >
+          <span className="uppercase">{t('scrollHint')}</span>
+          <motion.span animate={{ y: [0, 6, 0] }} transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}>
+            <ChevronDown size={20} />
+          </motion.span>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -54,6 +90,8 @@ export default function Invitation() {
   const [opening, setOpening] = useState(false);
   const [opened, setOpened] = useState(false);
   const [use3D] = useState(canUse3D);
+  const progress = useRef(0);
+  const openedOnce = useRef(false);
   const c = content.data;
   const music = useMusic(
     c ?? ({ music: { enabled: false, src: '', title: '' } } as unknown as Parameters<typeof useMusic>[0]),
@@ -119,12 +157,14 @@ export default function Invitation() {
   const guestCode = guest.data ? code : null;
 
   const open = () => {
-    if (opening) return;
+    if (openedOnce.current) return;
+    openedOnce.current = true;
     setOpening(true);
     music.play();
     void requestMotionPermission();
     void api('/api/open', { method: 'POST', json: guestCode ? { guestCode } : {} }).catch(() => undefined);
-    setTimeout(() => setOpened(true), use3D ? 1500 : 1000);
+    // A swipe already did part of the work, so the rest of the sequence is shorter.
+    setTimeout(() => setOpened(true), use3D ? 1500 - Math.round(progress.current * 500) : 1000);
   };
 
   return (
@@ -140,11 +180,13 @@ export default function Invitation() {
                 guestName={guestName}
                 onOpen={open}
                 opening={opening}
+                progress={progress}
                 backdrop={
                   use3D ? (
                     <Suspense fallback={null}>
                       <CoverScene
                         opening={opening}
+                        progress={progress}
                         title={c.couple.order === 'bride-first' ? `${c.couple.bride.nickname} & ${c.couple.groom.nickname}` : `${c.couple.groom.nickname} & ${c.couple.bride.nickname}`}
                         subtitle={c.events[0] ? shortDate(c.events[0]) : ''}
                       />
@@ -161,6 +203,7 @@ export default function Invitation() {
             </Suspense>
           )}
           {opened && <Controls music={music} />}
+          {opened && <ScrollHint />}
         </div>
       </TiltProvider>
     </MotionConfig>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import { CAMERA_FOV, CAMERA_Z, ENV_H as H, ENV_W as W, SEAL_LOCAL_Y, envelopeLayout } from './layout';
 
 /**
  * Real-time 3D cover: a paper envelope with a wax seal floating in a petal drift.
@@ -11,7 +12,8 @@ import * as THREE from 'three';
  * rises out → camera dollies in while petals burst outward.
  */
 
-const { damp } = THREE.MathUtils;
+const { damp, clamp, smoothstep } = THREE.MathUtils;
+const stage = (p: number, from: number, to: number) => smoothstep(clamp((p - from) / (to - from), 0, 1), 0, 1);
 
 function themeColor(name: string, fallback: string): THREE.Color {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -58,9 +60,6 @@ function usePalette(): Palette {
 }
 
 /* ---------------- Geometry helpers ---------------- */
-
-const W = 3.2; // envelope width
-const H = 2.1; // envelope height
 
 function triangle(a: [number, number], b: [number, number], c: [number, number], round = 0.08) {
   const s = new THREE.Shape();
@@ -152,16 +151,28 @@ function useCardTexture(pal: Palette, title: string, subtitle: string) {
 
 /* ---------------- Envelope ---------------- */
 
-function Envelope({ opening, pal, tilt, cardTex }: { opening: boolean; pal: Palette; tilt: RefObject<{ x: number; y: number }>; cardTex: THREE.Texture }) {
+function Envelope({
+  opening,
+  progress,
+  pal,
+  tilt,
+  cardTex,
+}: {
+  opening: boolean;
+  progress: RefObject<number>;
+  pal: Palette;
+  tilt: RefObject<{ x: number; y: number }>;
+  cardTex: THREE.Texture;
+}) {
   const root = useRef<THREE.Group>(null);
   const flap = useRef<THREE.Group>(null);
   const card = useRef<THREE.Group>(null);
   const sealL = useRef<THREE.Group>(null);
   const sealR = useRef<THREE.Group>(null);
   const t0 = useRef<number | null>(null);
-  const { viewport } = useThree();
-  const scale = Math.min(0.95, (viewport.width * 0.72) / W, (viewport.height * 0.3) / H);
-  const homeY = viewport.height * 0.2;
+  const p = useRef(0);
+  const { size } = useThree();
+  const { scale, homeY } = envelopeLayout(size.width, size.height);
 
   const geo = useMemo(() => {
     const left = triangle([-W / 2, -H / 2], [-W / 2, H / 2], [0.02, -0.05], 0);
@@ -185,19 +196,25 @@ function Envelope({ opening, pal, tilt, cardTex }: { opening: boolean; pal: Pale
     if (!g) return;
     const t = state.clock.elapsedTime;
     if (opening && t0.current === null) t0.current = t;
-    const p = t0.current === null ? 0 : t - t0.current; // seconds since open
+    const since = t0.current === null ? 0 : t - t0.current; // seconds since open
+
+    // Follow the finger while swiping; once opened, finish at a steady pace from wherever it is.
+    if (opening) p.current = Math.min(1, p.current + dt / 1.1);
+    else p.current = damp(p.current, progress.current ?? 0, 14, dt);
+    const k = p.current;
+    const dolly = opening && (k > 0.92 || since > 1);
 
     // idle float + tilt (tilt ref is fed from gyro / pointer)
     const tx = tilt.current?.x ?? 0;
     const ty = tilt.current?.y ?? 0;
-    g.rotation.y = damp(g.rotation.y, tx * 0.35 + Math.sin(t * 0.5) * 0.05, 4, dt);
+    g.rotation.y = damp(g.rotation.y, tx * 0.35 + Math.sin(t * 0.5) * 0.05 * (1 - k), 4, dt);
     g.rotation.x = damp(g.rotation.x, -0.12 + ty * 0.25 + Math.sin(t * 0.7) * 0.03, 4, dt);
-    const baseY = homeY + Math.sin(t * 0.9) * 0.05;
-    g.position.y = damp(g.position.y, baseY - (p > 0.9 ? 0.5 : 0), 3, dt);
+    const baseY = homeY + Math.sin(t * 0.9) * 0.04 * (1 - k);
+    g.position.y = damp(g.position.y, baseY - (dolly ? 0.5 : 0), 3, dt);
 
     // seal splits apart
     if (sealL.current && sealR.current) {
-      const s = p > 0 ? Math.min(1, p / 0.45) : 0;
+      const s = clamp(k / 0.16, 0, 1);
       sealL.current.position.x = -s * 0.9;
       sealR.current.position.x = s * 0.9;
       sealL.current.position.y = sealR.current.position.y = -s * s * 1.2;
@@ -206,23 +223,20 @@ function Envelope({ opening, pal, tilt, cardTex }: { opening: boolean; pal: Pale
       sealL.current.visible = sealR.current.visible = s < 1;
     }
     // flap swings open on its hinge
-    if (flap.current) {
-      const target = p > 0.25 ? -Math.PI * 0.96 : 0;
-      flap.current.rotation.x = damp(flap.current.rotation.x, target, 5, dt);
-    }
+    if (flap.current) flap.current.rotation.x = -Math.PI * 0.96 * stage(k, 0.04, 0.46);
     // card rises and comes toward the camera
     if (card.current) {
-      const up = p > 0.7 ? 1 : 0;
-      card.current.position.y = damp(card.current.position.y, up * 1.55, 3.2, dt);
-      card.current.position.z = damp(card.current.position.z, up * 0.9, 2.5, dt);
-      card.current.rotation.x = damp(card.current.rotation.x, up * 0.12, 3, dt);
+      const up = stage(k, 0.4, 1);
+      card.current.position.y = up * 1.55;
+      card.current.position.z = up * 0.9;
+      card.current.rotation.x = up * 0.12;
     }
     // camera dolly
     const cam = state.camera;
-    cam.position.z = damp(cam.position.z, p > 0.9 ? 3.6 : 7, 1.6, dt);
+    cam.position.z = damp(cam.position.z, dolly ? 3.6 : CAMERA_Z, 1.6, dt);
     // follow the rising card so it ends centred in frame
     const cardY = g.position.y + (card.current?.position.y ?? 0) * scale;
-    cam.position.y = damp(cam.position.y, p > 0.9 ? cardY : 0, 1.6, dt);
+    cam.position.y = damp(cam.position.y, dolly ? cardY : 0, 1.6, dt);
     cam.lookAt(0, cam.position.y, 0);
   });
 
@@ -231,7 +245,7 @@ function Envelope({ opening, pal, tilt, cardTex }: { opening: boolean; pal: Pale
   );
 
   return (
-    <group ref={root} scale={scale}>
+    <group ref={root} scale={scale} position={[0, homeY, 0]}>
       {/* back panel (inside of the envelope) */}
       <mesh position={[0, 0, -0.02]}>
         <planeGeometry args={[W, H]} />
@@ -257,7 +271,7 @@ function Envelope({ opening, pal, tilt, cardTex }: { opening: boolean; pal: Pale
       </group>
 
       {/* wax seal (two halves so it can crack open) */}
-      <group position={[0, H / 2 - H * 0.62, 0.08]} rotation={[Math.PI / 2, 0, 0]}>
+      <group position={[0, SEAL_LOCAL_Y, 0.08]} rotation={[Math.PI / 2, 0, 0]}>
         <group ref={sealL}>
           <mesh geometry={geo.sealL}>
             <meshStandardMaterial color={pal.seal} roughness={0.35} metalness={0.1} />
@@ -345,7 +359,17 @@ function Petals({ opening, pal, count }: { opening: boolean; pal: Palette; count
 
 /* ---------------- Scene ---------------- */
 
-export default function CoverScene({ opening, title, subtitle }: { opening: boolean; title: string; subtitle: string }) {
+export default function CoverScene({
+  opening,
+  progress,
+  title,
+  subtitle,
+}: {
+  opening: boolean;
+  progress: RefObject<number>;
+  title: string;
+  subtitle: string;
+}) {
   const pal = usePalette();
   const cardTex = useCardTexture(pal, title, subtitle);
   const tilt = useRef({ x: 0, y: 0 });
@@ -374,7 +398,7 @@ export default function CoverScene({ opening, title, subtitle }: { opening: bool
   return (
     <div className="absolute inset-0" aria-hidden="true">
       <Canvas
-        camera={{ position: [0, 0, 7], fov: 35 }}
+        camera={{ position: [0, 0, CAMERA_Z], fov: CAMERA_FOV }}
         dpr={[1, 1.75]}
         gl={{ antialias: true, alpha: true, powerPreference: 'default' }}
         onCreated={({ gl }) => {
@@ -388,7 +412,7 @@ export default function CoverScene({ opening, title, subtitle }: { opening: bool
         <hemisphereLight args={['#fff8f4', '#e9efe9', 1.1]} />
         <directionalLight position={[2.5, 4, 5]} intensity={2.2} color="#fff4ec" />
         <directionalLight position={[-3, -1, 2]} intensity={0.5} color="#f2f6ff" />
-        <Envelope opening={opening} pal={pal} tilt={tilt} cardTex={cardTex} />
+        <Envelope opening={opening} progress={progress} pal={pal} tilt={tilt} cardTex={cardTex} />
         <Petals opening={opening} pal={pal} count={count} />
       </Canvas>
     </div>
