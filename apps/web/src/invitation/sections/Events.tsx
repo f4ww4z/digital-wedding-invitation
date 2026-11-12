@@ -60,6 +60,14 @@ function EventCard({ e, c, index }: { e: WeddingEvent; c: InvitationContent; ind
         <Clock size={16} className="text-accent" aria-hidden />
         {t('time', { start: e.startTime, end, tz: e.timezoneLabel })}
       </p>
+      <a
+        href={googleCalendarUrl(e, `${c.meta.title} · ${l(e.name)}`, window.location.origin)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn btn-ghost mt-4 !px-4 !py-2 text-sm"
+      >
+        <CalendarPlus size={16} aria-hidden /> {t('saveTheDate')}
+      </a>
       <div className="mt-6">
         <p className="flex items-center justify-center gap-2 font-medium">
           <MapPin size={16} className="text-accent" aria-hidden />
@@ -67,7 +75,7 @@ function EventCard({ e, c, index }: { e: WeddingEvent; c: InvitationContent; ind
         </p>
         <p className="mx-auto mt-1 max-w-[18rem] text-sm text-ink/75">{e.address}</p>
       </div>
-      <div className="-mx-3 mt-6 flex justify-center gap-2">
+      <div className="mt-6 flex justify-center gap-2">
         {e.mapsUrl && (
           <a href={e.mapsUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary shrink-0 !px-4 !py-2.5 text-sm">
             <MapIcon size={16} aria-hidden /> {t('openMaps')}
@@ -78,16 +86,6 @@ function EventCard({ e, c, index }: { e: WeddingEvent; c: InvitationContent; ind
             <WazeIcon /> Waze
           </a>
         )}
-        <a
-          href={googleCalendarUrl(e, `${c.meta.title} · ${l(e.name)}`, window.location.origin)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-ghost shrink-0 !px-3 !py-2.5 text-sm"
-          aria-label={t('saveTheDate')}
-          title={t('saveTheDate')}
-        >
-          <CalendarPlus size={16} aria-hidden />
-        </a>
       </div>
       {e.mapsEmbedQuery && (
         <div className="mt-5 overflow-hidden rounded-2xl border border-line">
