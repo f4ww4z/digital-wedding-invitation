@@ -68,42 +68,61 @@ export function Modal({ open, onClose, label, children }: { open: boolean; onClo
 }
 
 /**
- * Bottom sheet on phones, centred card on wider screens. Same <dialog> base as
- * Modal (native focus trap, Esc, backdrop click); the body scrolls on its own.
+ * Bottom sheet on phones, centred card on wider screens. Built on <dialog> for the
+ * native focus trap, but the dialog itself is a transparent full-screen layer so the
+ * panel can slide up on open and slide back down before the dialog actually closes.
  */
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
   const { t } = useTranslation();
+  // `shown` lags `open` on close so the slide-down can finish first.
+  const [shown, setShown] = useState(open);
+  if (open && !shown) setShown(true);
+
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (open && !d.open) d.showModal();
-    if (!open && d.open) d.close();
-    document.body.classList.toggle('scroll-locked', open);
+    if (shown && !d.open) d.showModal();
+    if (!shown && d.open) d.close();
+    document.body.classList.toggle('scroll-locked', shown);
     return () => document.body.classList.remove('scroll-locked');
-  }, [open]);
+  }, [shown]);
+
   return (
     <dialog
       ref={ref}
       aria-label={title}
-      onClose={onClose}
-      onClick={(e) => {
-        if (e.target === ref.current) onClose();
+      // Esc: run our own slide-down instead of the instant native close.
+      onCancel={(e) => {
+        e.preventDefault();
+        onClose();
       }}
       // Lenis would otherwise swallow wheel events meant for the sheet body.
       data-lenis-prevent
-      className="mx-auto mb-0 mt-auto max-h-[90svh] w-full max-w-[30rem] overflow-hidden rounded-t-[2rem] bg-bg p-0 text-ink shadow-2xl backdrop:bg-[rgb(30_20_35/0.5)] backdrop:backdrop-blur-sm sm:mb-auto sm:max-w-[28rem] sm:rounded-[2rem]"
+      className="m-0 h-full max-h-none w-full max-w-none overflow-hidden bg-transparent p-0 text-ink backdrop:bg-transparent"
     >
-      <AnimatePresence>
+      <AnimatePresence onExitComplete={() => setShown(false)}>
         {open && (
           <motion.div
-            initial={{ y: 60, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-            className="flex max-h-[90svh] flex-col"
+            key="scrim"
+            className="absolute inset-0 bg-[rgb(30_20_35/0.5)] backdrop-blur-sm"
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          />
+        )}
+        {open && (
+          <motion.div
+            key="panel"
+            className="absolute inset-x-0 bottom-0 mx-auto flex max-h-[90svh] w-full max-w-[30rem] flex-col overflow-hidden rounded-t-[2rem] bg-bg shadow-2xl"
+            initial={{ y: '100%' }}
+            animate={{ y: 0, transition: { type: 'spring', stiffness: 210, damping: 30 } }}
+            exit={{ y: '100%', transition: { duration: 0.32, ease: [0.4, 0, 1, 1] } }}
           >
             <div className="relative shrink-0 px-6 pb-3 pt-3 text-center">
-              <span aria-hidden className="mx-auto mb-3 block h-1.5 w-11 rounded-full bg-ink/15 sm:hidden" />
+              <span aria-hidden className="mx-auto mb-3 block h-1.5 w-11 rounded-full bg-ink/15" />
               <h3 className="display-italic text-[1.9rem] leading-tight">{title}</h3>
               <button type="button" onClick={onClose} aria-label={t('close')} className="absolute right-3 top-3 rounded-full p-2 text-muted hover:bg-primary-soft">
                 <X size={20} aria-hidden />

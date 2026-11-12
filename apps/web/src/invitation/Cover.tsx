@@ -139,7 +139,11 @@ export function Cover({
       </div>
 
       {/* Names and greeting sit on top; the envelope lives in the lower half. */}
-      <motion.div className="relative z-10 mx-6 mt-[max(11svh,3rem)] flex max-w-[24rem] flex-col items-center text-center" style={{ opacity: textOpacity, y: textY }}>
+      {/* The block hugs the envelope from above, whatever the screen height. */}
+      <motion.div
+        className="absolute inset-x-0 top-0 z-10 flex flex-col items-center justify-end px-6 text-center"
+        style={{ height: Math.max(lay.topPx - Math.min(36, vp.h * 0.04), 0), opacity: textOpacity, y: textY }}
+      >
         <motion.div
           className="flex flex-col items-center"
           animate={opening ? { scale: 1.15, opacity: 0, filter: 'blur(8px)' } : {}}

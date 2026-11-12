@@ -24,6 +24,8 @@ export function envelopeLayout(w: number, h: number) {
     homeY: (0.5 - SEAL_Y) * worldH - SEAL_LOCAL_Y * scale,
     sealPx,
     sealRadiusPx: 0.3 * scale * pxPerWorld,
+    /** Pixel Y of the envelope's top edge. */
+    topPx: sealPx - (ENV_H / 2 - SEAL_LOCAL_Y) * scale * pxPerWorld,
     /** Pixel Y of the envelope's bottom edge. */
     bottomPx: sealPx + (ENV_H / 2 + SEAL_LOCAL_Y) * scale * pxPerWorld,
   };
