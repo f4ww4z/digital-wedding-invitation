@@ -2,19 +2,22 @@ import { useRef, useState, type DragEvent } from 'react';
 import { Copy, Music, Pencil, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import type { MediaItem } from '@wedding/shared';
+import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
+import { at, adminIntlLocale } from '../i18n';
 import { fmtDate, useAdminMutation, useAdminQuery } from '../hooks';
 import { confirmAction, Empty, PageHeader } from '../components/ui';
 import { useUpload } from '../components/fields';
 
-const kb = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.round(n / 1024)} KB`);
+const kb = (n: number) => (n > 1024 * 1024 ? `${new Intl.NumberFormat(adminIntlLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n / 1024 / 1024)} MB` : `${Math.round(n / 1024)} KB`);
 
 export default function Media() {
+  const { t } = useTranslation('media');
   const q = useAdminQuery<MediaItem[]>('media', '/api/admin/media');
   const up = useUpload();
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
-  const remove = useAdminMutation((id: number) => api(`/api/admin/media/${id}`, { method: 'DELETE' }), { invalidate: ['media'], success: 'File deleted' });
+  const remove = useAdminMutation((id: number) => api(`/api/admin/media/${id}`, { method: 'DELETE' }), { invalidate: ['media'], success: t('deleted') });
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
     setOver(false);
@@ -23,8 +26,8 @@ export default function Media() {
   return (
     <>
       <PageHeader
-        title="Media"
-        description="Photos are resized and converted to WebP automatically, with location data removed. Audio: MP3, OGG, M4A or WAV."
+        title={t('title')}
+        description={t('description')}
       />
       <button
         type="button"
@@ -39,7 +42,7 @@ export default function Media() {
         className={`flex w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed px-6 py-10 text-sm transition-colors ${over ? 'border-primary bg-primary-soft' : 'border-line text-muted hover:border-primary/60'}`}
       >
         <Upload size={24} aria-hidden />
-        {up.busy ? 'Uploading…' : 'Drop files here or tap to upload'}
+        {up.busy ? t('uploading') : t('drop')}
       </button>
       <input ref={input} type="file" multiple className="hidden" accept="image/*,audio/mpeg,audio/ogg,audio/mp4,audio/x-m4a,audio/wav" onChange={(e) => {
           void up.run(e.target.files);
@@ -49,9 +52,9 @@ export default function Media() {
 
       <div className="mt-6">
         {q.isLoading ? (
-          <p className="text-sm text-muted">Loading…</p>
+          <p className="text-sm text-muted">{t('loading')}</p>
         ) : !q.data?.length ? (
-          <Empty>No files yet.</Empty>
+          <Empty>{t('empty')}</Empty>
         ) : (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {q.data.map((m) => (
@@ -66,7 +69,7 @@ export default function Media() {
                 )}
                 <div className="p-2.5">
                   <p className="truncate text-xs font-medium" title={m.originalName}>
-                    {m.originalName || 'file'}
+                    {m.originalName || t('fileFallback')}
                   </p>
                   <p className="text-[0.65rem] text-muted">
                     {kb(m.size)}
@@ -78,7 +81,7 @@ export default function Media() {
                       className="btn btn-ghost flex-1 !px-2 !py-1.5 text-xs"
                       onClick={() => {
                         void navigator.clipboard.writeText(m.url);
-                        toast.success('URL copied');
+                        toast.success(at('media:urlCopied'));
                       }}
                     >
                       <Copy size={13} aria-hidden /> URL
@@ -87,8 +90,8 @@ export default function Media() {
                       <button
                         type="button"
                         className="btn btn-ghost !px-2 !py-1.5 text-xs"
-                        aria-label={`Edit ${m.originalName}`}
-                        title="Crop, rotate or adjust (saves a copy)"
+                        aria-label={t('editLabel', { name: m.originalName })}
+                        title={t('editTitle')}
                         disabled={up.busy}
                         onClick={() => void up.editExisting(m.url)}
                       >
@@ -98,8 +101,8 @@ export default function Media() {
                     <button
                       type="button"
                       className="btn btn-ghost !px-2 !py-1.5 text-xs text-[#9c3353]"
-                      aria-label={`Delete ${m.originalName}`}
-                      onClick={() => confirmAction('Delete this file? Anything using it will show a broken image.') && remove.mutate(m.id)}
+                      aria-label={t('deleteLabel', { name: m.originalName })}
+                      onClick={() => confirmAction(t('deleteConfirm')) && remove.mutate(m.id)}
                     >
                       <Trash2 size={13} aria-hidden />
                     </button>

@@ -103,6 +103,9 @@ Desktop: invitation renders in a centered phone-width column with a blurred them
 
 ## 6. Admin dashboard (`/admin`)
 
+- Language: every admin string is translated (react-i18next, separate instance from the guest UI),
+  Bahasa Indonesia by default, English selectable in the sidebar / mobile top bar and on the login
+  page; stored in `localStorage` (`invitation.admin.lang`). Known API errors are translated client-side.
 - Login: username + argon2 password hash from `.env`; server session in SQLite,
   httpOnly + Secure + SameSite=Strict cookie, CSRF token on mutations, per-IP login rate limit
   plus a persistent account lockout (15 min after 10 consecutive failures). The env credential's

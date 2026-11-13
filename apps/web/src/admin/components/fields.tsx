@@ -3,7 +3,9 @@ import { ArrowDown, ArrowUp, ImagePlus, Music, Pencil, Plus, Trash2, Upload, X }
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import type { LText, MediaItem } from '@wedding/shared';
-import { api, errorMessage } from '../../lib/api';
+import { useTranslation } from 'react-i18next';
+import { api } from '../../lib/api';
+import { at, adminErrorMessage } from '../i18n';
 import { useAdminQuery } from '../hooks';
 import { Dialog } from './ui';
 import { fileFromUrl, useImageEditor, type EditOptions } from '../imageEditor/context';
@@ -118,12 +120,13 @@ export function Toggle({ label, checked, onChange, hint }: { label: string; chec
 }
 
 export function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const { t } = useTranslation('fields');
   return (
     <Field label={label}>
       {(id) => (
         <div className="flex items-center gap-2">
           <input id={id} type="color" value={value} onChange={(e) => onChange(e.target.value)} className="h-10 w-12 cursor-pointer rounded-lg border border-line bg-transparent p-1" />
-          <input className="field font-mono !text-xs" value={value} maxLength={7} onChange={(e) => onChange(e.target.value)} aria-label={`${label} hex value`} />
+          <input className="field font-mono !text-xs" value={value} maxLength={7} onChange={(e) => onChange(e.target.value)} aria-label={t('hexValue', { label })} />
         </div>
       )}
     </Field>
@@ -175,9 +178,9 @@ export function useUpload(onDone?: (m: MediaItem) => void, editOptions?: EditOpt
         uploaded++;
         onDone?.(m);
       }
-      if (uploaded) toast.success(uploaded > 1 ? `${uploaded} files uploaded` : 'Uploaded');
+      if (uploaded) toast.success(uploaded > 1 ? at('fields:uploadedMany', { n: uploaded }) : at('fields:uploadedOne'));
     } catch (e) {
-      toast.error(errorMessage(e));
+      toast.error(adminErrorMessage(e));
     } finally {
       setBusy(false);
       if (uploaded) void qc.invalidateQueries({ queryKey: ['admin', 'media'] });
@@ -189,7 +192,7 @@ export function useUpload(onDone?: (m: MediaItem) => void, editOptions?: EditOpt
     try {
       file = await fileFromUrl(url);
     } catch (e) {
-      toast.error(errorMessage(e));
+      toast.error(adminErrorMessage(e));
       return;
     }
     await run([file]);
@@ -198,6 +201,7 @@ export function useUpload(onDone?: (m: MediaItem) => void, editOptions?: EditOpt
 }
 
 function MediaPicker({ open, onClose, kind, onPick, editOptions }: { open: boolean; onClose: () => void; kind: 'image' | 'audio'; onPick: (url: string) => void; editOptions?: EditOptions }) {
+  const { t } = useTranslation('fields');
   const media = useAdminQuery<MediaItem[]>('media', '/api/admin/media');
   const input = useRef<HTMLInputElement>(null);
   const up = useUpload((m) => {
@@ -208,9 +212,9 @@ function MediaPicker({ open, onClose, kind, onPick, editOptions }: { open: boole
   }, editOptions);
   const items = (media.data ?? []).filter((m) => m.kind === kind);
   return (
-    <Dialog open={open} onClose={onClose} title={kind === 'image' ? 'Choose an image' : 'Choose audio'} wide>
+    <Dialog open={open} onClose={onClose} title={kind === 'image' ? t('chooseImage') : t('chooseAudio')} wide>
       <button type="button" className="btn btn-primary w-full" onClick={() => input.current?.click()} disabled={up.busy}>
-        <Upload size={18} aria-hidden /> {up.busy ? 'Uploading…' : `Upload ${kind === 'image' ? 'an image' : 'an audio file'}`}
+        <Upload size={18} aria-hidden /> {up.busy ? t('uploading') : kind === 'image' ? t('uploadImage') : t('uploadAudio')}
       </button>
       <input ref={input} type="file" className="hidden" accept={kind === 'image' ? 'image/jpeg,image/png,image/webp,image/avif,image/heic' : 'audio/mpeg,audio/ogg,audio/mp4,audio/x-m4a,audio/wav'} onChange={(e) => {
           void up.run(e.target.files);
@@ -218,7 +222,7 @@ function MediaPicker({ open, onClose, kind, onPick, editOptions }: { open: boole
         }}
       />
       {items.length === 0 ? (
-        <p className="mt-6 text-center text-sm text-muted">Nothing uploaded yet.</p>
+        <p className="mt-6 text-center text-sm text-muted">{t('nothingUploaded')}</p>
       ) : (
         <ul className={`mt-4 grid max-h-[50dvh] gap-2 overflow-auto ${kind === 'image' ? 'grid-cols-3 sm:grid-cols-4' : 'grid-cols-1'}`}>
           {items.map((m) => (
@@ -264,6 +268,7 @@ export function MediaField({
   /** How the photo is shown on the invitation, so the editor can suggest the right crop. */
   editor?: EditOptions;
 }) {
+  const { t } = useTranslation('fields');
   const [open, setOpen] = useState(false);
   const up = useUpload((m) => m.kind === 'image' && onChange(m.url), editor);
   const editable = kind === 'image' && value.startsWith('/media/');
@@ -279,13 +284,13 @@ export function MediaField({
                 <ImagePlus size={18} />
               </span>
             ))}
-          <input id={id} className="field min-w-0 flex-1 !text-xs" value={value} placeholder="/media/… or https://…" onChange={(e) => onChange(e.target.value)} />
+          <input id={id} className="field min-w-0 flex-1 !text-xs" value={value} placeholder={t('urlPlaceholder')} onChange={(e) => onChange(e.target.value)} />
           {editable && (
             <button
               type="button"
               className="shrink-0 rounded-full p-2 text-muted hover:bg-line disabled:opacity-40"
-              aria-label={`Edit ${label}`}
-              title="Crop, rotate or adjust"
+              aria-label={t('editLabel', { label })}
+              title={t('editTitle')}
               disabled={up.busy}
               onClick={() => void up.editExisting(value)}
             >
@@ -293,10 +298,10 @@ export function MediaField({
             </button>
           )}
           <button type="button" className="btn btn-ghost shrink-0 !px-3 !py-2 text-sm" onClick={() => setOpen(true)}>
-            Choose
+            {t('choose')}
           </button>
           {value && (
-            <button type="button" className="shrink-0 rounded-full p-1.5 text-muted hover:bg-line" aria-label={`Clear ${label}`} onClick={() => onChange('')}>
+            <button type="button" className="shrink-0 rounded-full p-1.5 text-muted hover:bg-line" aria-label={t('clearLabel', { label })} onClick={() => onChange('')}>
               <X size={16} aria-hidden />
             </button>
           )}
@@ -326,6 +331,7 @@ export function ListEditor<T>({
   itemLabel: (item: T, i: number) => string;
   max?: number;
 }) {
+  const { t } = useTranslation('fields');
   const move = (i: number, d: number) => {
     const next = [...items];
     const [x] = next.splice(i, 1);
@@ -338,13 +344,13 @@ export function ListEditor<T>({
         <div key={i} className="rounded-2xl border border-line bg-bg/50 p-4">
           <div className="mb-3 flex items-center gap-1">
             <p className="mr-auto min-w-0 truncate text-sm font-medium text-muted">{itemLabel(it, i)}</p>
-            <button type="button" className="rounded-full p-1.5 text-muted hover:bg-line disabled:opacity-30" disabled={i === 0} onClick={() => move(i, -1)} aria-label="Move up">
+            <button type="button" className="rounded-full p-1.5 text-muted hover:bg-line disabled:opacity-30" disabled={i === 0} onClick={() => move(i, -1)} aria-label={t('moveUp')}>
               <ArrowUp size={16} aria-hidden />
             </button>
-            <button type="button" className="rounded-full p-1.5 text-muted hover:bg-line disabled:opacity-30" disabled={i === items.length - 1} onClick={() => move(i, 1)} aria-label="Move down">
+            <button type="button" className="rounded-full p-1.5 text-muted hover:bg-line disabled:opacity-30" disabled={i === items.length - 1} onClick={() => move(i, 1)} aria-label={t('moveDown')}>
               <ArrowDown size={16} aria-hidden />
             </button>
-            <button type="button" className="rounded-full p-1.5 text-[#9c3353] hover:bg-line" onClick={() => onChange(items.filter((_, j) => j !== i))} aria-label={`Remove ${itemLabel(it, i)}`}>
+            <button type="button" className="rounded-full p-1.5 text-[#9c3353] hover:bg-line" onClick={() => onChange(items.filter((_, j) => j !== i))} aria-label={t('removeItem', { label: itemLabel(it, i) })}>
               <Trash2 size={16} aria-hidden />
             </button>
           </div>

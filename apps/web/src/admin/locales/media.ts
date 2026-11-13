@@ -1,0 +1,31 @@
+/** Media library page. */
+export default {
+  id: {
+    title: 'Media',
+    description: 'Foto diubah ukurannya dan dikonversi ke WebP secara otomatis, dengan data lokasi dihapus. Audio: MP3, OGG, M4A, atau WAV.',
+    uploading: 'Mengunggah…',
+    drop: 'Letakkan berkas di sini atau ketuk untuk mengunggah',
+    empty: 'Belum ada berkas.',
+    fileFallback: 'berkas',
+    urlCopied: 'URL tersalin',
+    editLabel: 'Ubah {{name}}',
+    editTitle: 'Potong, putar, atau sesuaikan (disimpan sebagai salinan)',
+    deleteLabel: 'Hapus {{name}}',
+    deleteConfirm: 'Hapus berkas ini? Semua yang memakainya akan menampilkan gambar rusak.',
+    deleted: 'Berkas dihapus',
+  },
+  en: {
+    title: 'Media',
+    description: 'Photos are resized and converted to WebP automatically, with location data removed. Audio: MP3, OGG, M4A or WAV.',
+    uploading: 'Uploading…',
+    drop: 'Drop files here or tap to upload',
+    empty: 'No files yet.',
+    fileFallback: 'file',
+    urlCopied: 'URL copied',
+    editLabel: 'Edit {{name}}',
+    editTitle: 'Crop, rotate or adjust (saves a copy)',
+    deleteLabel: 'Delete {{name}}',
+    deleteConfirm: 'Delete this file? Anything using it will show a broken image.',
+    deleted: 'File deleted',
+  },
+};

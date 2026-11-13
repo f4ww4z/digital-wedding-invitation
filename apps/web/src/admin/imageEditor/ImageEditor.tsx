@@ -24,6 +24,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import {
   applyMatrix,
   buildMatrix,
@@ -63,15 +64,16 @@ export type EditOptions = {
 type Tab = 'crop' | 'rotate' | 'adjust' | 'filters';
 type AspectChoice = {
   id: string;
-  label: string;
+  label?: string;
+  labelKey?: string;
   value: number | 'original' | 'free';
   recommended?: boolean;
 };
 
 const BASE_ASPECTS: AspectChoice[] = [
-  { id: 'original', label: 'Original', value: 'original' },
-  { id: 'free', label: 'Free', value: 'free' },
-  { id: '1:1', label: 'Square', value: 1 },
+  { id: 'original', labelKey: 'aspect.original', value: 'original' },
+  { id: 'free', labelKey: 'aspect.free', value: 'free' },
+  { id: '1:1', labelKey: 'aspect.square', value: 1 },
   { id: '4:5', label: '4:5', value: 4 / 5 },
   { id: '3:4', label: '3:4', value: 3 / 4 },
   { id: '4:3', label: '4:3', value: 4 / 3 },
@@ -79,12 +81,7 @@ const BASE_ASPECTS: AspectChoice[] = [
   { id: '9:16', label: '9:16', value: 9 / 16 },
 ];
 
-const ADJUSTMENTS: { key: keyof Adjust; label: string }[] = [
-  { key: 'brightness', label: 'Brightness' },
-  { key: 'contrast', label: 'Contrast' },
-  { key: 'saturation', label: 'Saturation' },
-  { key: 'warmth', label: 'Warmth' },
-];
+const ADJUSTMENTS: (keyof Adjust)[] = ['brightness', 'contrast', 'saturation', 'warmth'];
 
 const PREVIEW_MAX = 1600;
 const STAGE_PAD = 20;
@@ -99,7 +96,7 @@ function aspectChoices(opts: EditOptions): AspectChoice[] {
   return [
     {
       id: 'suggested',
-      label: opts.aspectLabel ?? 'Suggested',
+      ...(opts.aspectLabel ? { label: opts.aspectLabel } : { labelKey: 'aspect.suggested' }),
       value: opts.aspect,
       recommended: true,
     },
@@ -203,6 +200,7 @@ export function ImageEditor({
   onDone: (f: File) => void;
   onCancel: () => void;
 }) {
+  const { t: tr } = useTranslation('editor');
   const dialog = useRef<HTMLDialogElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -474,8 +472,8 @@ export function ImageEditor({
   const zoomSlider = Math.round((Math.log(ct.zoom) / Math.log(MAX_ZOOM)) * 100);
   const title =
     options.queue && options.queue.total > 1
-      ? `Edit photo ${options.queue.index} of ${options.queue.total}`
-      : 'Edit photo';
+      ? tr('titleQueue', { n: options.queue.index, total: options.queue.total })
+      : tr('title');
   const frameLeft = (stageSize.w - frame.w) / 2;
   const frameTop = (stageSize.h - frame.h) / 2;
 
@@ -507,7 +505,7 @@ export function ImageEditor({
             type="button"
             onClick={onCancel}
             className="rounded-full p-2 text-muted hover:bg-line"
-            aria-label="Cancel editing"
+            aria-label={tr('cancelEditing')}
           >
             <X size={20} aria-hidden />
           </button>
@@ -518,7 +516,7 @@ export function ImageEditor({
             onClick={resetAll}
             disabled={!dirty}
           >
-            <Undo2 size={16} aria-hidden /> Reset
+            <Undo2 size={16} aria-hidden /> {tr('reset')}
           </button>
         </div>
 
@@ -528,7 +526,7 @@ export function ImageEditor({
             ref={stage}
             tabIndex={0}
             role="application"
-            aria-label="Photo crop area. Drag to move, scroll or pinch to zoom, arrow keys to nudge."
+            aria-label={tr('cropArea')}
             onKeyDown={onStageKey}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
@@ -604,12 +602,12 @@ export function ImageEditor({
             )}
             {!touched && (
               <p className="pointer-events-none absolute inset-x-0 bottom-3 mx-auto w-max rounded-full bg-black/55 px-3 py-1.5 text-xs text-white backdrop-blur">
-                Drag to move · pinch or scroll to zoom
+                {tr('hintDrag')}
               </p>
             )}
             {options.shape && touched && (
               <p className="pointer-events-none absolute inset-x-0 bottom-1.5 mx-auto w-max rounded-full bg-black/50 px-2.5 py-1 text-[0.65rem] text-white/90">
-                Dashed line = how it&apos;s framed on the invitation
+                {tr('hintFrame')}
               </p>
             )}
           </div>
@@ -619,7 +617,7 @@ export function ImageEditor({
             <button
               type="button"
               className="rounded-full p-1.5 hover:bg-white/10"
-              aria-label="Zoom out"
+              aria-label={tr('zoomOut')}
               onClick={() => update((t, k) => zoomAt(t, 1 / 1.25, 0, 0, k))}
             >
               <ZoomOut size={18} aria-hidden />
@@ -629,7 +627,7 @@ export function ImageEditor({
               min={0}
               max={100}
               value={zoomSlider}
-              aria-label="Zoom"
+              aria-label={tr('zoom')}
               onChange={(e) => {
                 const z = Math.pow(MAX_ZOOM, Number(e.target.value) / 100);
                 update((t) => ({ ...t, zoom: z }));
@@ -640,7 +638,7 @@ export function ImageEditor({
             <button
               type="button"
               className="rounded-full p-1.5 hover:bg-white/10"
-              aria-label="Zoom in"
+              aria-label={tr('zoomIn')}
               onClick={() => update((t, k) => zoomAt(t, 1.25, 0, 0, k))}
             >
               <ZoomIn size={18} aria-hidden />
@@ -654,9 +652,9 @@ export function ImageEditor({
               onPointerLeave={() => setComparing(false)}
               onKeyDown={(e) => (e.key === ' ' || e.key === 'Enter') && setComparing(true)}
               onKeyUp={() => setComparing(false)}
-              title="Hold to see the photo without colour changes"
+              title={tr('compareTitle')}
             >
-              <Eye size={14} aria-hidden /> Compare
+              <Eye size={14} aria-hidden /> {tr('compare')}
             </button>
           </div>
         </div>
@@ -665,17 +663,17 @@ export function ImageEditor({
         <div className="flex min-h-0 flex-col lg:border-l lg:border-line">
           <div
             role="tablist"
-            aria-label="Editing tools"
+            aria-label={tr('tools')}
             className="grid grid-cols-4 gap-1 border-b border-line p-1.5"
           >
             {(
               [
-                ['crop', 'Crop', Crop],
-                ['rotate', 'Rotate', RotateCw],
-                ['adjust', 'Adjust', SlidersHorizontal],
-                ['filters', 'Filters', Sparkles],
+                ['crop', 'tabs.crop', Crop],
+                ['rotate', 'tabs.rotate', RotateCw],
+                ['adjust', 'tabs.adjust', SlidersHorizontal],
+                ['filters', 'tabs.filters', Sparkles],
               ] as const
-            ).map(([id, label, Icon]) => (
+            ).map(([id, labelKey, Icon]) => (
               <button
                 key={id}
                 type="button"
@@ -685,7 +683,7 @@ export function ImageEditor({
                 className={`flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition-colors ${tab === id ? 'bg-primary-soft font-medium text-ink' : 'text-muted hover:bg-line/60'}`}
               >
                 <Icon size={18} aria-hidden />
-                {label}
+                {tr(labelKey)}
               </button>
             ))}
           </div>
@@ -697,8 +695,8 @@ export function ImageEditor({
             {tab === 'crop' && (
               <>
                 <p className="mb-3 text-xs text-muted">
-                  Pick a shape, then drag the photo to position it.
-                  {choice.value === 'free' ? ' Drag the corners to resize.' : ''}
+                  {tr('cropHint')}
+                  {choice.value === 'free' ? tr('cropHintFree') : ''}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {choices.map((c) => (
@@ -710,12 +708,12 @@ export function ImageEditor({
                       className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition-colors ${aspectId === c.id ? 'border-primary-strong bg-primary-strong text-white' : 'border-line hover:bg-primary-soft'}`}
                     >
                       {typeof c.value === 'number' && <AspectIcon ratio={c.value} />}
-                      {c.label}
+                      {c.label ?? tr(c.labelKey!)}
                       {c.recommended && (
                         <span
                           className={`text-[0.65rem] ${aspectId === c.id ? 'text-white/80' : 'text-primary-strong'}`}
                         >
-                          ★ best fit
+                          {tr('bestFit')}
                         </span>
                       )}
                     </button>
@@ -728,34 +726,34 @@ export function ImageEditor({
               <>
                 <div className="grid grid-cols-4 gap-2">
                   <ToolButton
-                    label="Left"
+                    label={tr('left')}
                     onClick={() => rotate(-1)}
                     icon={<RotateCcw size={20} aria-hidden />}
-                    aria="Rotate left"
+                    aria={tr('rotateLeft')}
                   />
                   <ToolButton
-                    label="Right"
+                    label={tr('right')}
                     onClick={() => rotate(1)}
                     icon={<RotateCw size={20} aria-hidden />}
-                    aria="Rotate right"
+                    aria={tr('rotateRight')}
                   />
                   <ToolButton
-                    label="Mirror"
+                    label={tr('mirror')}
                     onClick={() => flip('x')}
                     icon={<FlipHorizontal2 size={20} aria-hidden />}
-                    aria="Flip horizontally"
+                    aria={tr('flipH')}
                     pressed={ct.flipX}
                   />
                   <ToolButton
-                    label="Flip"
+                    label={tr('flip')}
                     onClick={() => flip('y')}
                     icon={<FlipVertical2 size={20} aria-hidden />}
-                    aria="Flip vertically"
+                    aria={tr('flipV')}
                     pressed={ct.flipY}
                   />
                 </div>
                 <Slider
-                  label="Straighten"
+                  label={tr('straighten')}
                   min={-45}
                   max={45}
                   step={0.5}
@@ -771,14 +769,14 @@ export function ImageEditor({
               <div className="flex flex-col gap-1">
                 {ADJUSTMENTS.map((a) => (
                   <Slider
-                    key={a.key}
-                    label={a.label}
+                    key={a}
+                    label={tr(`adjustments.${a}`)}
                     min={-100}
                     max={100}
                     step={1}
-                    value={adjust[a.key]}
+                    value={adjust[a]}
                     format={(v) => `${v > 0 ? '+' : ''}${Math.round(v)}`}
-                    onChange={(v) => setAdjust((x) => ({ ...x, [a.key]: Math.abs(v) < 3 ? 0 : v }))}
+                    onChange={(v) => setAdjust((x) => ({ ...x, [a]: Math.abs(v) < 3 ? 0 : v }))}
                   />
                 ))}
               </div>
@@ -804,14 +802,14 @@ export function ImageEditor({
                         }}
                       />
                       <span className={preset === p.id ? 'font-medium' : 'text-muted'}>
-                        {p.label}
+                        {tr(`presets.${p.id}`)}
                       </span>
                     </button>
                   ))}
                 </div>
                 {preset !== 'none' && (
                   <Slider
-                    label="Strength"
+                    label={tr('strength')}
                     min={0}
                     max={100}
                     step={1}
@@ -832,7 +830,7 @@ export function ImageEditor({
               onClick={() => onDone(file)}
               disabled={saving}
             >
-              Use original
+              {tr('useOriginal')}
             </button>
             <button
               type="button"
@@ -840,7 +838,7 @@ export function ImageEditor({
               onClick={() => void save()}
               disabled={saving}
             >
-              <Check size={18} aria-hidden /> {saving ? 'Saving…' : 'Save photo'}
+              <Check size={18} aria-hidden /> {saving ? tr('saving') : tr('save')}
             </button>
           </div>
         </div>
@@ -907,6 +905,7 @@ function Slider({
   format: (v: number) => string;
   onActive?: (on: boolean) => void;
 }) {
+  const { t: tr } = useTranslation('editor');
   const id = useId();
   const zero = min < 0 ? 0 : min;
   return (
@@ -922,9 +921,9 @@ function Slider({
               type="button"
               className="rounded-full px-2 py-0.5 text-xs text-primary-strong hover:bg-primary-soft"
               onClick={() => onChange(0)}
-              aria-label={`Reset ${label}`}
+              aria-label={tr('resetNamed', { label })}
             >
-              Reset
+              {tr('reset')}
             </button>
           )}
         </span>

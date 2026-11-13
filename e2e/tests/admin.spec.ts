@@ -12,8 +12,41 @@ async function login(page: Page) {
   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
 }
 
+/** The admin defaults to Indonesian; these journeys use the English labels. */
+async function useEnglish(page: Page) {
+  await page.addInitScript(() => localStorage.setItem('invitation.admin.lang', 'en'));
+}
+
+test.describe('admin language', () => {
+  test.skip(!PASSWORD, 'Set ADMIN_PASSWORD to run admin tests');
+
+  test('defaults to Indonesian and switches to English from the sidebar', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/admin');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'id');
+    await page.getByLabel('Nama pengguna').fill(USERNAME);
+    await page.getByLabel('Kata sandi').fill(PASSWORD!);
+    await page.getByRole('button', { name: 'Masuk' }).click();
+    await expect(page.getByRole('heading', { name: 'Ringkasan' })).toBeVisible();
+
+    const sidebar = page.locator('aside');
+    await sidebar.getByRole('button', { name: 'English' }).click();
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
+    await expect(sidebar.getByRole('link', { name: 'Guests' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+
+    // Remembered on reload, then switch back.
+    await page.reload();
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
+    await sidebar.getByRole('button', { name: 'Indonesia' }).click();
+    await expect(page.getByRole('heading', { name: 'Ringkasan' })).toBeVisible();
+    await expect(sidebar.getByRole('link', { name: 'Tamu' })).toBeVisible();
+  });
+});
+
 test.describe('admin journey', () => {
   test.skip(!PASSWORD, 'Set ADMIN_PASSWORD to run admin tests');
+  test.beforeEach(({ page }) => useEnglish(page));
 
   test('rejects a wrong password', async ({ page }) => {
     await page.goto('/admin');

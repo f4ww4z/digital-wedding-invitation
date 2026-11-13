@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { useTranslation } from 'react-i18next';
 import type { AdminStats } from '@wedding/shared';
 import { formatMoney } from '../../lib/format';
 import { useAdminQuery } from '../hooks';
 import { Card, PageHeader } from '../components/ui';
+import { adminIntlLocale, adminLocale } from '../i18n';
 
 /* Validated categorical data palette (see dataviz validator): attending, maybe, not attending. */
 const RSVP_COLORS = { yes: '#3d8a5a', maybe: '#c08a1e', no: '#c2456a' } as const;
@@ -26,16 +28,17 @@ function Stat({ label, value, sub, to }: { label: string; value: string | number
 }
 
 function RsvpBar({ r }: { r: AdminStats['rsvp'] }) {
+  const { t } = useTranslation('overview');
   const total = r.yes + r.maybe + r.no;
-  const parts = (['yes', 'maybe', 'no'] as const).map((k) => ({ k, n: r[k], label: { yes: 'Attending', maybe: 'Not sure', no: 'Not attending' }[k] }));
+  const parts = (['yes', 'maybe', 'no'] as const).map((k) => ({ k, n: r[k], label: t(`rsvp.${k}`) }));
   return (
     <Card>
       <div className="flex items-baseline justify-between">
-        <h2 className="font-medium">RSVP responses</h2>
-        <p className="text-sm text-muted">{total} total</p>
+        <h2 className="font-medium">{t('rsvpResponses')}</h2>
+        <p className="text-sm text-muted">{t('total', { n: total })}</p>
       </div>
       {total === 0 ? (
-        <p className="mt-6 text-sm text-muted">No responses yet. Share guest links from the Guests page.</p>
+        <p className="mt-6 text-sm text-muted">{t('noResponses')}</p>
       ) : (
         <>
           {/* segmented bar: 2px surface gaps between segments, rounded ends */}
@@ -61,6 +64,7 @@ function RsvpBar({ r }: { r: AdminStats['rsvp'] }) {
 
 /** Single-series daily bars, last 30 days. Hover/focus shows the exact value. */
 function OpensChart({ data }: { data: AdminStats['opensByDay'] }) {
+  const { t } = useTranslation('overview');
   const [hover, setHover] = useState<number | null>(null);
   const days: { day: string; count: number }[] = [];
   const map = new Map(data.map((d) => [d.day, d.count]));
@@ -74,14 +78,14 @@ function OpensChart({ data }: { data: AdminStats['opensByDay'] }) {
   const bw = W / days.length; // 12 units per day
   const total = days.reduce((a, d) => a + d.count, 0);
   const h = hover !== null ? days[hover] : null;
-  const fmt = (d: string) => new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(d));
+  const fmt = (d: string) => new Intl.DateTimeFormat(adminIntlLocale(), { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(d));
   return (
     <Card>
       <div className="flex items-baseline justify-between">
-        <h2 className="font-medium">Invitation opens, last 30 days</h2>
-        <p className="text-sm text-muted tabular-nums">{h ? `${fmt(h.day)}: ${h.count}` : `${total} total`}</p>
+        <h2 className="font-medium">{t('opensTitle')}</h2>
+        <p className="text-sm text-muted tabular-nums">{h ? `${fmt(h.day)}: ${h.count}` : t('total', { n: total })}</p>
       </div>
-      <svg viewBox={`0 0 ${W} ${H + 22}`} className="mt-4 w-full" role="img" aria-label={`Daily invitation opens, ${total} in the last 30 days`} onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${W} ${H + 22}`} className="mt-4 w-full" role="img" aria-label={t('opensAria', { total })} onMouseLeave={() => setHover(null)}>
         {[0.5, 1].map((f) => (
           <line key={f} x1={0} x2={W} y1={H - H * f} y2={H - H * f} stroke="var(--c-line)" strokeDasharray="2 4" />
         ))}
@@ -100,42 +104,43 @@ function OpensChart({ data }: { data: AdminStats['opensByDay'] }) {
           );
         })}
         <text x={0} y={H + 16} fontSize={10} fill="var(--c-muted)">{fmt(days[0]!.day)}</text>
-        <text x={W} y={H + 16} fontSize={10} fill="var(--c-muted)" textAnchor="end">Today</text>
+        <text x={W} y={H + 16} fontSize={10} fill="var(--c-muted)" textAnchor="end">{t('today')}</text>
       </svg>
     </Card>
   );
 }
 
 export function Overview() {
+  const { t } = useTranslation('overview');
   const q = useAdminQuery<AdminStats>('stats', '/api/admin/stats');
   const s = q.data;
   return (
     <>
-      <PageHeader title="Overview" description="How your invitation is doing. Numbers refresh when you come back to this page." />
+      <PageHeader title={t('title')} description={t('description')} />
       {!s ? (
-        <p className="text-sm text-muted">Loading…</p>
+        <p className="text-sm text-muted">{t('loading')}</p>
       ) : (
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <Stat label="Guests who opened" value={`${s.guests.opened}/${s.guests.total}`} sub="From personal links" to="/admin/guests" />
-            <Stat label="Expected attendees" value={s.rsvp.paxYes} sub={`${s.rsvp.yes} RSVPs attending`} to="/admin/rsvps" />
-            <Stat label="Wishes" value={s.wishes.total} sub={s.wishes.pending ? `${s.wishes.pending} waiting for approval` : 'None waiting'} to="/admin/wishes" />
+            <Stat label={t('guestsOpened')} value={`${s.guests.opened}/${s.guests.total}`} sub={t('fromPersonalLinks')} to="/admin/guests" />
+            <Stat label={t('expectedAttendees')} value={s.rsvp.paxYes} sub={t('rsvpsAttending', { n: s.rsvp.yes })} to="/admin/rsvps" />
+            <Stat label={t('wishes')} value={s.wishes.total} sub={s.wishes.pending ? t('waitingApproval', { n: s.wishes.pending }) : t('noneWaiting')} to="/admin/wishes" />
             <Stat
-              label="Gifts confirmed"
+              label={t('giftsConfirmed')}
               value={s.gifts.total}
-              sub={`${s.gifts.received} received${s.gifts.amountTotal ? ` · ${formatMoney(s.gifts.amountTotal, 'id')}` : ''}`}
+              sub={`${t('received', { n: s.gifts.received })}${s.gifts.amountTotal ? ` · ${formatMoney(s.gifts.amountTotal, adminLocale())}` : ''}`}
               to="/admin/gifts"
             />
           </div>
           <div className="grid gap-4 lg:grid-cols-2">
             <RsvpBar r={s.rsvp} />
             <Card>
-              <h2 className="font-medium">Gift registry</h2>
+              <h2 className="font-medium">{t('registry')}</h2>
               <p className="display mt-3 text-[2.4rem] leading-none tabular-nums">
                 {s.wishlist.claimed}
                 <span className="text-xl text-muted">/{s.wishlist.totalQty}</span>
               </p>
-              <p className="mt-2 text-xs text-muted">items picked across {s.wishlist.items} registry entries</p>
+              <p className="mt-2 text-xs text-muted">{t('registryPicked', { n: s.wishlist.items })}</p>
               <div className="mt-4 h-2 overflow-hidden rounded-full bg-line">
                 <div className="h-full rounded-full bg-[var(--c-accent)]" style={{ width: `${s.wishlist.totalQty ? (s.wishlist.claimed / s.wishlist.totalQty) * 100 : 0}%` }} />
               </div>

@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react';
+import { at } from '../i18n';
 import { ImageEditor, type EditOptions } from './ImageEditor';
 
 export type { EditOptions, FrameShape } from './ImageEditor';
@@ -79,7 +80,7 @@ export const useImageEditor = () => useContext(Ctx);
 /** Fetch an already-uploaded image (same origin) so it can be edited. */
 export async function fileFromUrl(url: string) {
   const res = await fetch(url, { credentials: 'same-origin' });
-  if (!res.ok) throw new Error(`Couldn't load the image (${res.status})`);
+  if (!res.ok) throw new Error(at('editor:loadFailed', { status: res.status }));
   const blob = await res.blob();
   const name = decodeURIComponent(url.split('/').pop()?.split('?')[0] || 'photo');
   return new File([blob], name, { type: blob.type });

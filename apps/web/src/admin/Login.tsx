@@ -1,10 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { LogIn } from 'lucide-react';
-import { api, errorMessage, setCsrfToken } from '../lib/api';
+import { useTranslation } from 'react-i18next';
+import { api, setCsrfToken } from '../lib/api';
+import { adminErrorMessage } from './i18n';
+import { LanguageSwitch } from './components/LanguageSwitch';
 import { Bloom } from '../invitation/ornaments/Florals';
 
 export function Login() {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
@@ -19,27 +23,30 @@ export function Login() {
       setCsrfToken(r.csrfToken);
       await qc.invalidateQueries({ queryKey: ['admin', 'me'] });
     } catch (err) {
-      setError(errorMessage(err));
+      setError(adminErrorMessage(err));
     } finally {
       setBusy(false);
     }
   };
   return (
-    <main className="flex min-h-svh items-center justify-center px-5">
+    <main className="relative flex min-h-svh items-center justify-center px-5">
+      <div className="absolute right-3 top-3 w-48">
+        <LanguageSwitch />
+      </div>
       <form onSubmit={submit} className="w-full max-w-sm rounded-3xl border border-line bg-surface p-8 shadow-[0_30px_60px_-40px_rgb(61_51_69/0.6)]">
         <div className="mb-6 flex items-center gap-3">
           <Bloom size={40} />
           <div>
-            <h1 className="display text-2xl">Admin</h1>
-            <p className="text-sm text-muted">Sign in to manage your invitation.</p>
+            <h1 className="display text-2xl">{t('login.title')}</h1>
+            <p className="text-sm text-muted">{t('login.subtitle')}</p>
           </div>
         </div>
         <label className="block text-sm">
-          Username
+          {t('login.username')}
           <input className="field mt-1" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" required />
         </label>
         <label className="mt-4 block text-sm">
-          Password
+          {t('login.password')}
           <input className="field mt-1" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required autoFocus />
         </label>
         {error && (
@@ -48,7 +55,7 @@ export function Login() {
           </p>
         )}
         <button className="btn btn-primary mt-6 w-full" disabled={busy}>
-          <LogIn size={18} aria-hidden /> Sign in
+          <LogIn size={18} aria-hidden /> {t('login.submit')}
         </button>
       </form>
     </main>

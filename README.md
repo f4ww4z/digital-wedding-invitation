@@ -35,6 +35,7 @@ is editable** — no code, no redeploys. One wedding per deployment, runs anywhe
 - **Content editor** for every section, in both languages: names, events, story, gallery, accounts, colors, music, toggles. Changes go live when you press _Publish_.
 - **Media library**: photos are resized, converted to WebP and stripped of location data automatically.
 - **Photo editor**: every image upload opens a simple editor first, with crop (with the best ratio for each spot, e.g. 3:4 for the couple's arch portraits), pan and zoom, rotate, mirror and straighten, brightness, contrast, saturation, warmth and filters. The preview updates live, and existing photos can be re-edited.
+- **In Bahasa Indonesia by default**: switch the dashboard to English from the sidebar (or the top bar on phones). The choice is remembered per browser and doesn't change the guests' language.
 
 ## Quick start
 
@@ -173,6 +174,9 @@ The content model lives in `packages/shared/src/content.ts`. To add a section: e
 and defaults, render it in `apps/web/src/invitation/sections`, and add its editor in
 `apps/web/src/admin/pages/Content.tsx`. Stored content from older versions is merged with the new
 defaults automatically.
+
+Admin dashboard text lives in `apps/web/src/admin/locales/<namespace>.ts`, one file per page, each
+with `id` and `en` objects. A unit test checks that both languages have the same keys.
 
 ## Credits
 

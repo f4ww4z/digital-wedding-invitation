@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { api, errorMessage, setCsrfToken } from '../lib/api';
+import { api, setCsrfToken } from '../lib/api';
+import { adminErrorMessage, adminIntlLocale } from './i18n';
 
 export interface Me {
   username: string;
@@ -38,7 +39,7 @@ export function useAdminMutation<V, R = unknown>(
       void qc.invalidateQueries({ queryKey: ['admin', 'stats'] });
       if (opts.success) toast.success(typeof opts.success === 'function' ? opts.success(r) : opts.success);
     },
-    onError: (e) => toast.error(errorMessage(e)),
+    onError: (e) => toast.error(adminErrorMessage(e)),
   });
 }
 
@@ -46,5 +47,5 @@ export const inviteLink = (publicUrl: string, code: string) => `${publicUrl.repl
 
 export function fmtDate(iso: string | null | undefined) {
   if (!iso) return '—';
-  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
+  return new Intl.DateTimeFormat(adminIntlLocale(), { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
 }

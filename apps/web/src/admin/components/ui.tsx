@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return (
@@ -34,6 +35,7 @@ export function Badge({ tone = 'neutral', children }: { tone?: 'yes' | 'no' | 'm
 
 /** Native <dialog> modal for admin forms. */
 export function Dialog({ open, onClose, title, children, wide = false }: { open: boolean; onClose: () => void; title: string; children: ReactNode; wide?: boolean }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
@@ -54,7 +56,7 @@ export function Dialog({ open, onClose, title, children, wide = false }: { open:
         <div className="p-6">
           <div className="mb-4 flex items-center justify-between gap-4">
             <h2 className="text-lg font-semibold">{title}</h2>
-            <button type="button" onClick={onClose} className="rounded-full p-1.5 text-muted hover:bg-line" aria-label="Close">
+            <button type="button" onClick={onClose} className="rounded-full p-1.5 text-muted hover:bg-line" aria-label={t('close')}>
               <X size={18} aria-hidden />
             </button>
           </div>
