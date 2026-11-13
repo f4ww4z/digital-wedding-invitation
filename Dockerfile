@@ -38,6 +38,10 @@ RUN cd /out/api/node_modules/.pnpm \
  && find . -type d -name prebuilds -prune -exec sh -c 'for d in "$1"/*; do case "${d##*/}" in linux-"$2"|linux-"$2".*|linuxmusl-"$2"|linuxmusl-"$2".*) ;; *) rm -rf "$d" ;; esac; done' _ {} "$ARCH" \; \
  && find . -type f \( -name '*.md' -o -name '*.d.ts' -o -name '*.d.cts' -o -name '*.d.mts' -o -name '*.map' \) -delete
 
+# Normalise permissions: the checkout's mode bits (e.g. a umask-077 clone on the
+# server) must not leak into the images, whose runtimes run as non-root users.
+RUN chmod -R u=rwX,go=rX /out/api /repo/apps/web/dist
+
 # ---------- node binary only (no npm/yarn/corepack in the runtime) ----------
 FROM ${NODE_IMAGE} AS node
 
@@ -65,7 +69,7 @@ CMD ["node", "--enable-source-maps", "dist/index.js"]
 
 # ---------- web runtime ----------
 FROM ${NGINX_IMAGE} AS web
-COPY --chown=root:root apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --chown=root:root --chmod=0644 apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build --chown=root:root /repo/apps/web/dist /usr/share/nginx/html
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
