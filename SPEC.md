@@ -116,7 +116,11 @@ Desktop: invitation renders in a centered phone-width column with a blurred them
 - **Gifts**: confirmations list, mark received/notes; wishlist items CRUD + view claims, release claim.
 - **Content editor** (shows a notice if stored values became invalid after an upgrade and were reset): every section of the invitation (texts in ID/EN, couple, events,
   story, gallery, gifts, music, theme colors, section toggles) with live preview link.
-- **Media library**: upload / browse / delete images and audio.
+- **Media library**: upload / browse / delete images and audio. Image uploads (and re-edits of
+  existing images) go through a client-side editor: aspect presets with a per-field suggested
+  ratio and frame-shape guide, pan/pinch/wheel zoom, 90° rotate, flip, straighten, colour
+  adjustments and filter presets, live preview. The edited image is exported on a canvas and
+  uploaded as a new file; formats the browser can't decode upload unedited.
 - **Settings**: RSVP deadline, wish moderation on/off, WhatsApp template, change password.
 - Mobile-friendly layout.
 

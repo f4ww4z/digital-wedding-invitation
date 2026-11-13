@@ -1,5 +1,5 @@
 import { useRef, useState, type DragEvent } from 'react';
-import { Copy, Music, Trash2, Upload } from 'lucide-react';
+import { Copy, Music, Pencil, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import type { MediaItem } from '@wedding/shared';
 import { api } from '../../lib/api';
@@ -41,7 +41,11 @@ export default function Media() {
         <Upload size={24} aria-hidden />
         {up.busy ? 'Uploading…' : 'Drop files here or tap to upload'}
       </button>
-      <input ref={input} type="file" multiple className="hidden" accept="image/*,audio/mpeg,audio/ogg,audio/mp4,audio/x-m4a,audio/wav" onChange={(e) => void up.run(e.target.files)} />
+      <input ref={input} type="file" multiple className="hidden" accept="image/*,audio/mpeg,audio/ogg,audio/mp4,audio/x-m4a,audio/wav" onChange={(e) => {
+          void up.run(e.target.files);
+          e.target.value = '';
+        }}
+      />
 
       <div className="mt-6">
         {q.isLoading ? (
@@ -79,6 +83,18 @@ export default function Media() {
                     >
                       <Copy size={13} aria-hidden /> URL
                     </button>
+                    {m.kind === 'image' && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost !px-2 !py-1.5 text-xs"
+                        aria-label={`Edit ${m.originalName}`}
+                        title="Crop, rotate or adjust (saves a copy)"
+                        disabled={up.busy}
+                        onClick={() => void up.editExisting(m.url)}
+                      >
+                        <Pencil size={13} aria-hidden />
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="btn btn-ghost !px-2 !py-1.5 text-xs text-[#9c3353]"

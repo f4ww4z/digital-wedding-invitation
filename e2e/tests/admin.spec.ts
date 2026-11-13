@@ -79,4 +79,41 @@ test.describe('admin journey', () => {
       .poll(async () => (await (await page.request.get('/api/content')).json()).content.closing.signature.en)
       .toBe(original);
   });
+
+  test('crop a photo to a square in the editor before it uploads', async ({ page }) => {
+    await login(page);
+    await page.goto('/admin/media');
+    // A 900×600 landscape JPEG drawn in the browser.
+    const b64 = await page.evaluate(async () => {
+      const c = document.createElement('canvas');
+      c.width = 900;
+      c.height = 600;
+      const ctx = c.getContext('2d')!;
+      ctx.fillStyle = '#c98';
+      ctx.fillRect(0, 0, 900, 600);
+      ctx.fillStyle = '#365';
+      ctx.fillRect(0, 0, 450, 600);
+      const blob = await new Promise<Blob>((r) => c.toBlob((b) => r(b!), 'image/jpeg', 0.9));
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      let bin = '';
+      for (const x of bytes) bin += String.fromCharCode(x);
+      return btoa(bin);
+    });
+    await page.locator('input[type=file]').setInputFiles({ name: `e2e-${stamp}.jpg`, mimeType: 'image/jpeg', buffer: Buffer.from(b64, 'base64') });
+
+    const editor = page.getByRole('dialog', { name: 'Edit photo' });
+    await expect(editor).toBeVisible();
+    await expect(editor.getByTestId('editor-preview')).toBeVisible();
+    await editor.getByRole('button', { name: 'Square' }).click();
+    await editor.getByRole('button', { name: 'Zoom in' }).click();
+    await editor.getByRole('tab', { name: 'Rotate' }).click();
+    await editor.getByRole('button', { name: 'Rotate right' }).click();
+
+    const upload = page.waitForResponse((r) => r.url().endsWith('/api/admin/media') && r.request().method() === 'POST');
+    await editor.getByRole('button', { name: 'Save photo' }).click();
+    const item = await (await upload).json();
+    expect(item.kind).toBe('image');
+    expect(item.width).toBe(item.height);
+    await expect(editor).toBeHidden();
+  });
 });

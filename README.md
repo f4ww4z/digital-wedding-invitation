@@ -34,6 +34,7 @@ is editable** — no code, no redeploys. One wedding per deployment, runs anywhe
 - **RSVPs, wishes** (hide or require approval), **gift confirmations** (mark received) and the **gift registry**.
 - **Content editor** for every section, in both languages: names, events, story, gallery, accounts, colors, music, toggles. Changes go live when you press _Publish_.
 - **Media library**: photos are resized, converted to WebP and stripped of location data automatically.
+- **Photo editor**: every image upload opens a simple editor first, with crop (with the best ratio for each spot, e.g. 3:4 for the couple's arch portraits), pan and zoom, rotate, mirror and straighten, brightness, contrast, saturation, warmth and filters. The preview updates live, and existing photos can be re-edited.
 
 ## Quick start
 

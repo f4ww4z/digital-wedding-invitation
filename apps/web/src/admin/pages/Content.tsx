@@ -52,7 +52,7 @@ function PersonEditor({ p, set, label }: { p: Person; set: (p: Person) => void; 
         <TextField label="Nickname" hint="Shown large on the cover" value={p.nickname} max={40} onChange={(v) => set({ ...p, nickname: v })} />
         <TextField label="Full name with titles" value={p.fullName} max={120} onChange={(v) => set({ ...p, fullName: v })} />
       </div>
-      <MediaField label="Photo" hint="Portrait works best (3:4)" value={p.photo} onChange={(v) => set({ ...p, photo: v })} />
+      <MediaField label="Photo" hint="Portrait works best (3:4)" editor={{ aspect: 3 / 4, shape: 'arch' }} value={p.photo} onChange={(v) => set({ ...p, photo: v })} />
       <LField label="Child order" hint='e.g. "Putri kedua dari" / "Second daughter of"' value={p.childOrder} onChange={(v) => set({ ...p, childOrder: v })} max={120} />
       <LField label="Parents" value={p.parents} onChange={(v) => set({ ...p, parents: v })} max={240} />
       <TextField label="Instagram handle" hint="Without @. Leave empty to hide." value={p.instagram} max={60} onChange={(v) => set({ ...p, instagram: v.replace(/^@/, '') })} />
@@ -93,7 +93,11 @@ function GalleryBulkUpload({ onAdd }: { onAdd: (url: string) => void }) {
   return (
     <label className={`btn btn-ghost self-start !py-2 text-sm ${up.busy ? 'pointer-events-none opacity-60' : ''}`}>
       <Upload size={16} aria-hidden /> {up.busy ? 'Uploading…' : 'Upload several photos'}
-      <input type="file" multiple accept="image/*" className="sr-only" onChange={(e) => void up.run(e.target.files)} />
+      <input type="file" multiple accept="image/*" className="sr-only" onChange={(e) => {
+          void up.run(e.target.files);
+          e.target.value = '';
+        }}
+      />
     </label>
   );
 }
@@ -106,7 +110,7 @@ function Editor({ d, u, tab }: { d: C; u: Update; tab: Tab }) {
           <Section title="Page" description="What people see in browser tabs and link previews (WhatsApp, etc.).">
             <TextField label="Title" value={d.meta.title} max={120} onChange={(v) => u((x) => void (x.meta.title = v))} />
             <TextField label="Description" multiline rows={2} value={d.meta.description} max={300} onChange={(v) => u((x) => void (x.meta.description = v))} />
-            <MediaField label="Preview image" hint="1200×630 works best" value={d.meta.ogImage} onChange={(v) => u((x) => void (x.meta.ogImage = v))} />
+            <MediaField label="Preview image" hint="1200×630 works best" editor={{ aspect: 1200 / 630, aspectLabel: 'Link preview' }} value={d.meta.ogImage} onChange={(v) => u((x) => void (x.meta.ogImage = v))} />
             <Toggle
               label="Allow search engines"
               hint="Off keeps the invitation out of Google results. Link previews in WhatsApp work either way."
@@ -226,7 +230,7 @@ function Editor({ d, u, tab }: { d: C; u: Update; tab: Tab }) {
                 <LField label="Title" value={s.title} onChange={(v) => set({ ...s, title: v })} max={80} />
                 <LField label="When" value={s.date} onChange={(v) => set({ ...s, date: v })} max={60} />
                 <LField label="Story" multiline rows={4} value={s.text} onChange={(v) => set({ ...s, text: v })} max={1500} />
-                <MediaField label="Photo (optional)" value={s.image} onChange={(v) => set({ ...s, image: v })} />
+                <MediaField label="Photo (optional)" editor={{ aspect: 4 / 3 }} value={s.image} onChange={(v) => set({ ...s, image: v })} />
               </>
             )}
           />
@@ -288,7 +292,7 @@ function Editor({ d, u, tab }: { d: C; u: Update; tab: Tab }) {
                     <TextField label="Account number" value={a.number} max={60} onChange={(v) => set({ ...a, number: v })} />
                     <TextField label="Account holder" value={a.holder} max={120} onChange={(v) => set({ ...a, holder: v })} />
                   </div>
-                  <MediaField label="QR code / QRIS (optional)" value={a.qrImage} onChange={(v) => set({ ...a, qrImage: v })} />
+                  <MediaField label="QR code / QRIS (optional)" editor={{ aspect: 1 }} value={a.qrImage} onChange={(v) => set({ ...a, qrImage: v })} />
                 </>
               )}
             />
@@ -321,7 +325,7 @@ function Editor({ d, u, tab }: { d: C; u: Update; tab: Tab }) {
           <Section title="Closing">
             <LField label="Closing message" multiline rows={3} value={d.closing.text} onChange={(v) => u((x) => void (x.closing.text = v))} max={600} />
             <LField label="Signature line" value={d.closing.signature} onChange={(v) => u((x) => void (x.closing.signature = v))} max={120} />
-            <MediaField label="Closing photo (optional)" value={d.closing.image} onChange={(v) => u((x) => void (x.closing.image = v))} />
+            <MediaField label="Closing photo (optional)" editor={{ aspect: 7 / 9, aspectLabel: 'Arch 7:9', shape: 'arch' }} value={d.closing.image} onChange={(v) => u((x) => void (x.closing.image = v))} />
           </Section>
           <Section title="WhatsApp message" description="Used by the Send button on the Guests page. {name} and {link} are filled in per guest.">
             <LField label="Message" multiline rows={7} value={d.share.whatsappTemplate} onChange={(v) => u((x) => void (x.share.whatsappTemplate = v))} max={1500} />

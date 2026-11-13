@@ -1,11 +1,12 @@
 import { useId, useRef, useState, type ReactNode } from 'react';
-import { ArrowDown, ArrowUp, ImagePlus, Music, Plus, Trash2, Upload, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ImagePlus, Music, Pencil, Plus, Trash2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import type { LText, MediaItem } from '@wedding/shared';
 import { api, errorMessage } from '../../lib/api';
 import { useAdminQuery } from '../hooks';
 import { Dialog } from './ui';
+import { fileFromUrl, useImageEditor, type EditOptions } from '../imageEditor/context';
 
 export function Field({ label, hint, children, error }: { label: string; hint?: string; children: (id: string) => ReactNode; error?: string }) {
   const id = useId();
@@ -153,29 +154,50 @@ export async function uploadFile(file: File): Promise<MediaItem> {
   return api<MediaItem>('/api/admin/media', { method: 'POST', body: fd });
 }
 
-export function useUpload(onDone?: (m: MediaItem) => void) {
+/**
+ * Upload files one by one. Images open in the editor first (crop, rotate, colour);
+ * cancelling the editor stops the rest of the batch.
+ */
+export function useUpload(onDone?: (m: MediaItem) => void, editOptions?: EditOptions) {
   const qc = useQueryClient();
+  const edit = useImageEditor();
   const [busy, setBusy] = useState(false);
   const run = async (files: FileList | File[] | null | undefined) => {
-    if (!files?.length) return;
+    const list = Array.from(files ?? []);
+    if (!list.length) return;
     setBusy(true);
+    let uploaded = 0;
     try {
-      for (const f of Array.from(files)) {
-        const m = await uploadFile(f);
+      for (const [i, f] of list.entries()) {
+        const ready = f.type.startsWith('image/') ? await edit(f, { ...editOptions, queue: { index: i + 1, total: list.length } }) : f;
+        if (!ready) break;
+        const m = await uploadFile(ready);
+        uploaded++;
         onDone?.(m);
       }
-      toast.success('Uploaded');
-      void qc.invalidateQueries({ queryKey: ['admin', 'media'] });
+      if (uploaded) toast.success(uploaded > 1 ? `${uploaded} files uploaded` : 'Uploaded');
     } catch (e) {
       toast.error(errorMessage(e));
     } finally {
       setBusy(false);
+      if (uploaded) void qc.invalidateQueries({ queryKey: ['admin', 'media'] });
     }
   };
-  return { run, busy };
+  /** Edit an already-uploaded image; the result is saved as a new file. */
+  const editExisting = async (url: string) => {
+    let file: File;
+    try {
+      file = await fileFromUrl(url);
+    } catch (e) {
+      toast.error(errorMessage(e));
+      return;
+    }
+    await run([file]);
+  };
+  return { run, editExisting, busy };
 }
 
-function MediaPicker({ open, onClose, kind, onPick }: { open: boolean; onClose: () => void; kind: 'image' | 'audio'; onPick: (url: string) => void }) {
+function MediaPicker({ open, onClose, kind, onPick, editOptions }: { open: boolean; onClose: () => void; kind: 'image' | 'audio'; onPick: (url: string) => void; editOptions?: EditOptions }) {
   const media = useAdminQuery<MediaItem[]>('media', '/api/admin/media');
   const input = useRef<HTMLInputElement>(null);
   const up = useUpload((m) => {
@@ -183,14 +205,18 @@ function MediaPicker({ open, onClose, kind, onPick }: { open: boolean; onClose: 
       onPick(m.url);
       onClose();
     }
-  });
+  }, editOptions);
   const items = (media.data ?? []).filter((m) => m.kind === kind);
   return (
     <Dialog open={open} onClose={onClose} title={kind === 'image' ? 'Choose an image' : 'Choose audio'} wide>
       <button type="button" className="btn btn-primary w-full" onClick={() => input.current?.click()} disabled={up.busy}>
         <Upload size={18} aria-hidden /> {up.busy ? 'Uploading…' : `Upload ${kind === 'image' ? 'an image' : 'an audio file'}`}
       </button>
-      <input ref={input} type="file" className="hidden" accept={kind === 'image' ? 'image/jpeg,image/png,image/webp,image/avif,image/heic' : 'audio/mpeg,audio/ogg,audio/mp4,audio/x-m4a,audio/wav'} onChange={(e) => void up.run(e.target.files)} />
+      <input ref={input} type="file" className="hidden" accept={kind === 'image' ? 'image/jpeg,image/png,image/webp,image/avif,image/heic' : 'audio/mpeg,audio/ogg,audio/mp4,audio/x-m4a,audio/wav'} onChange={(e) => {
+          void up.run(e.target.files);
+          e.target.value = '';
+        }}
+      />
       {items.length === 0 ? (
         <p className="mt-6 text-center text-sm text-muted">Nothing uploaded yet.</p>
       ) : (
@@ -222,8 +248,25 @@ function MediaPicker({ open, onClose, kind, onPick }: { open: boolean; onClose: 
 }
 
 /** URL field with picker/upload. Also accepts pasted https:// URLs or site paths. */
-export function MediaField({ label, value, onChange, kind = 'image', hint }: { label: string; value: string; onChange: (v: string) => void; kind?: 'image' | 'audio'; hint?: string }) {
+export function MediaField({
+  label,
+  value,
+  onChange,
+  kind = 'image',
+  hint,
+  editor,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  kind?: 'image' | 'audio';
+  hint?: string;
+  /** How the photo is shown on the invitation, so the editor can suggest the right crop. */
+  editor?: EditOptions;
+}) {
   const [open, setOpen] = useState(false);
+  const up = useUpload((m) => m.kind === 'image' && onChange(m.url), editor);
+  const editable = kind === 'image' && value.startsWith('/media/');
   return (
     <Field label={label} hint={hint}>
       {(id) => (
@@ -237,6 +280,18 @@ export function MediaField({ label, value, onChange, kind = 'image', hint }: { l
               </span>
             ))}
           <input id={id} className="field min-w-0 flex-1 !text-xs" value={value} placeholder="/media/… or https://…" onChange={(e) => onChange(e.target.value)} />
+          {editable && (
+            <button
+              type="button"
+              className="shrink-0 rounded-full p-2 text-muted hover:bg-line disabled:opacity-40"
+              aria-label={`Edit ${label}`}
+              title="Crop, rotate or adjust"
+              disabled={up.busy}
+              onClick={() => void up.editExisting(value)}
+            >
+              <Pencil size={16} aria-hidden />
+            </button>
+          )}
           <button type="button" className="btn btn-ghost shrink-0 !px-3 !py-2 text-sm" onClick={() => setOpen(true)}>
             Choose
           </button>
@@ -245,7 +300,7 @@ export function MediaField({ label, value, onChange, kind = 'image', hint }: { l
               <X size={16} aria-hidden />
             </button>
           )}
-          <MediaPicker open={open} onClose={() => setOpen(false)} kind={kind} onPick={onChange} />
+          <MediaPicker open={open} onClose={() => setOpen(false)} kind={kind} onPick={onChange} editOptions={editor} />
         </div>
       )}
     </Field>
