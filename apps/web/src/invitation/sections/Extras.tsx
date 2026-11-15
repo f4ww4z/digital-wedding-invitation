@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Camera, Clock, Gift, HandHeart, Phone, Shirt, ShieldPlus, Users, Utensils, Video, HeartHandshake } from 'lucide-react';
 import type { InvitationContent } from '@wedding/shared';
+import { Separated } from '../icons/Separated';
 import type { etiquetteIcons } from '@wedding/shared';
 import { useL } from '../../lib/i18n';
 import { Reveal, Section, SectionTitle } from '../motion';
@@ -16,6 +17,7 @@ const ICONS: Record<(typeof etiquetteIcons)[number], typeof Clock> = {
   utensils: Utensils,
   pray: HeartHandshake,
   users: Users,
+  separated: Separated,
 };
 
 export function Livestream({ c }: { c: InvitationContent }) {

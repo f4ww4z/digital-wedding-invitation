@@ -15,6 +15,7 @@ export const etiquetteIcons = [
   'utensils',
   'pray',
   'users',
+  'separated',
 ] as const;
 
 /** Earliest event start as an absolute Date, used for countdown. */
